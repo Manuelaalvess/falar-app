@@ -17,6 +17,7 @@ import { ComunicarScreen } from './src/screens/ComunicarScreen';
 import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
 import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
 import { confirmVerificationCode, sendVerificationCode, signOut } from './src/services/auth';
+import { addContact, removeContact } from './src/services/emergency';
 import { firebaseConfig } from './src/services/firebase';
 import { addItem, clearItemPhoto, removeItem, setItemPhoto } from './src/services/items';
 import { generateLocalId, uploadItemPhoto } from './src/services/storage';
@@ -112,6 +113,24 @@ export default function App() {
     }
   }
 
+  async function handleAddContact(name: string, relation: string, phone: string, emoji: string) {
+    if (!user) return;
+    try {
+      await addContact(user.uid, name, relation, phone, emoji);
+    } catch (error) {
+      console.error('Falha ao adicionar contato:', error);
+    }
+  }
+
+  async function handleRemoveContact(contactId: string) {
+    if (!user) return;
+    try {
+      await removeContact(user.uid, contactId);
+    } catch (error) {
+      console.error('Falha ao remover contato:', error);
+    }
+  }
+
   if (!fontsLoaded || initializing) {
     return <View style={styles.container} />;
   }
@@ -132,6 +151,9 @@ export default function App() {
             onRemoveItem={handleRemoveItem}
             onSetItemPhoto={handleSetItemPhoto}
             onClearItemPhoto={handleClearItemPhoto}
+            emergencyContacts={emergencyContacts}
+            onAddContact={handleAddContact}
+            onRemoveContact={handleRemoveContact}
             onClose={() => setShowAdmin(false)}
             onSignOut={signOut}
           />

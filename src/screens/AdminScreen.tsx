@@ -7,6 +7,9 @@ import { CATEGORIES, EMOJI_CHOICES } from '../constants/communication';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationCategory, CommunicationItem } from '../types/communication';
+import type { EmergencyContact } from '../types/emergency';
+
+type AdminTab = 'perfil' | 'emergencia';
 
 interface AdminScreenProps {
   itemsByCategory: Record<string, CommunicationItem[]>;
@@ -14,6 +17,9 @@ interface AdminScreenProps {
   onRemoveItem: (itemId: string) => void;
   onSetItemPhoto: (itemId: string, photoUri: string) => void;
   onClearItemPhoto: (itemId: string) => void;
+  emergencyContacts: EmergencyContact[];
+  onAddContact: (name: string, relation: string, phone: string, emoji: string) => void;
+  onRemoveContact: (contactId: string) => void;
   onClose: () => void;
   onSignOut: () => void;
 }
@@ -24,9 +30,14 @@ export function AdminScreen({
   onRemoveItem,
   onSetItemPhoto,
   onClearItemPhoto,
+  emergencyContacts,
+  onAddContact,
+  onRemoveContact,
   onClose,
   onSignOut,
 }: AdminScreenProps) {
+  const [tab, setTab] = useState<AdminTab>('perfil');
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -35,19 +46,49 @@ export function AdminScreen({
         </Pressable>
         <Text style={styles.headerTitle}>Área da família</Text>
       </View>
+      <View style={styles.tabs}>
+        <Pressable
+          style={[styles.tabButton, tab === 'perfil' && styles.tabButtonActive]}
+          onPress={() => setTab('perfil')}
+        >
+          <Text style={[styles.tabButtonLabel, tab === 'perfil' && styles.tabButtonLabelActive]}>
+            Perfil
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.tabButton, tab === 'emergencia' && styles.tabButtonActive]}
+          onPress={() => setTab('emergencia')}
+        >
+          <Text
+            style={[styles.tabButtonLabel, tab === 'emergencia' && styles.tabButtonLabelActive]}
+          >
+            Emergência
+          </Text>
+        </Pressable>
+      </View>
       <ScrollView contentContainerStyle={styles.body}>
-        <Text style={styles.sectionLabel}>Personalize as categorias que o paciente usa</Text>
-        {CATEGORIES.map((category) => (
-          <CategoryBlock
-            key={category.key}
-            category={category}
-            items={itemsByCategory[category.key] ?? []}
-            onAddItem={onAddItem}
-            onRemoveItem={onRemoveItem}
-            onSetItemPhoto={onSetItemPhoto}
-            onClearItemPhoto={onClearItemPhoto}
+        {tab === 'perfil' ? (
+          <>
+            <Text style={styles.sectionLabel}>Personalize as categorias que o paciente usa</Text>
+            {CATEGORIES.map((category) => (
+              <CategoryBlock
+                key={category.key}
+                category={category}
+                items={itemsByCategory[category.key] ?? []}
+                onAddItem={onAddItem}
+                onRemoveItem={onRemoveItem}
+                onSetItemPhoto={onSetItemPhoto}
+                onClearItemPhoto={onClearItemPhoto}
+              />
+            ))}
+          </>
+        ) : (
+          <EmergenciaTab
+            contacts={emergencyContacts}
+            onAddContact={onAddContact}
+            onRemoveContact={onRemoveContact}
           />
-        ))}
+        )}
         <Pressable style={styles.signOutButton} onPress={onSignOut}>
           <Text style={styles.signOutLabel}>Sair da conta</Text>
         </Pressable>
@@ -200,6 +241,97 @@ function CategoryBlock({
   );
 }
 
+interface EmergenciaTabProps {
+  contacts: EmergencyContact[];
+  onAddContact: (name: string, relation: string, phone: string, emoji: string) => void;
+  onRemoveContact: (contactId: string) => void;
+}
+
+function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: EmergenciaTabProps) {
+  const [name, setName] = useState('');
+  const [relation, setRelation] = useState('');
+  const [phone, setPhone] = useState('');
+  const [emoji, setEmoji] = useState(EMOJI_CHOICES[0]);
+
+  function handleAdd() {
+    const trimmedName = name.trim();
+    const trimmedPhone = phone.trim();
+    if (!trimmedName || !trimmedPhone) return;
+    onAddContact(trimmedName, relation.trim() || 'Família', trimmedPhone, emoji);
+    setName('');
+    setRelation('');
+    setPhone('');
+  }
+
+  return (
+    <View>
+      <Text style={styles.sectionLabel}>Contatos que aparecem no botão 🆘</Text>
+      <View style={styles.block}>
+        {contacts.length > 0 ? (
+          contacts.map((contact) => (
+            <View key={contact.id} style={styles.itemRow}>
+              <Text style={styles.itemEmoji}>{contact.emoji}</Text>
+              <View style={styles.contactInfo}>
+                <Text style={styles.itemName}>
+                  {contact.name} <Text style={styles.contactRelation}>— {contact.relation}</Text>
+                </Text>
+                <Text style={styles.contactPhone}>
+                  {contact.phone || 'sem telefone cadastrado'}
+                </Text>
+              </View>
+              <Pressable onPress={() => onRemoveContact(contact.id)}>
+                <Text style={styles.deleteLabel}>✕</Text>
+              </Pressable>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.emptyLabel}>Nenhum contato ainda.</Text>
+        )}
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.emojiRow}>
+          {EMOJI_CHOICES.map((choice) => (
+            <Pressable
+              key={choice}
+              style={[styles.emojiChoice, choice === emoji && styles.emojiChoiceSelected]}
+              onPress={() => setEmoji(choice)}
+            >
+              <Text style={styles.emojiChoiceLabel}>{choice}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+
+        <View style={styles.contactFormRow}>
+          <TextInput
+            style={styles.input}
+            placeholder="Nome (ex: Ana)"
+            placeholderTextColor={colors.muted}
+            value={name}
+            onChangeText={setName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Relação (ex: Filha)"
+            placeholderTextColor={colors.muted}
+            value={relation}
+            onChangeText={setRelation}
+          />
+        </View>
+        <TextInput
+          style={[styles.input, styles.contactPhoneInput]}
+          placeholder="Telefone"
+          placeholderTextColor={colors.muted}
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+        />
+        <Pressable style={styles.addContactButton} onPress={handleAdd}>
+          <Text style={styles.addButtonLabel}>Adicionar contato</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -232,6 +364,33 @@ const styles = StyleSheet.create({
     fontFamily: fonts.headingMedium,
     fontSize: fontSizes.title,
     color: colors.ink,
+  },
+  tabs: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+  },
+  tabButton: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  tabButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  tabButtonLabel: {
+    fontFamily: fonts.headingMedium,
+    fontSize: fontSizes.bodySmall,
+    color: colors.muted,
+  },
+  tabButtonLabelActive: {
+    color: '#fff',
   },
   body: {
     padding: 18,
@@ -303,6 +462,34 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.bodySmall,
     color: colors.muted,
     paddingVertical: 6,
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactRelation: {
+    fontFamily: fonts.body,
+    fontWeight: '400',
+    color: colors.muted,
+  },
+  contactPhone: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.muted,
+  },
+  contactFormRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  contactPhoneInput: {
+    marginTop: 10,
+  },
+  addContactButton: {
+    backgroundColor: colors.accent,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 12,
   },
   emojiRow: {
     marginTop: 12,
