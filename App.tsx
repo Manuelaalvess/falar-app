@@ -10,6 +10,7 @@ import {
 } from './src/components/RecaptchaVerifierModal';
 import { useAppFonts } from './src/hooks/useAppFonts';
 import { useAuth } from './src/hooks/useAuth';
+import { useEmergencyContacts } from './src/hooks/useEmergencyContacts';
 import { useItems } from './src/hooks/useItems';
 import { AdminScreen } from './src/screens/AdminScreen';
 import { ComunicarScreen } from './src/screens/ComunicarScreen';
@@ -25,6 +26,7 @@ export default function App() {
   const [fontsLoaded] = useAppFonts();
   const { user, initializing } = useAuth();
   const { itemsByCategory } = useItems(user?.uid ?? null);
+  const { contacts: emergencyContacts } = useEmergencyContacts(user?.uid ?? null);
   const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
 
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
@@ -136,7 +138,10 @@ export default function App() {
         ) : (
           <>
             <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdmin(true)} />
-            <ComunicarScreen itemsByCategory={itemsByCategory} />
+            <ComunicarScreen
+              itemsByCategory={itemsByCategory}
+              emergencyContacts={emergencyContacts}
+            />
           </>
         )
       ) : confirmation ? (

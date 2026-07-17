@@ -2,19 +2,24 @@ import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { EmergencySheet } from '../components/EmergencySheet';
+import { SosBar } from '../components/SosBar';
 import { CATEGORIES, CATEGORY_COLORS } from '../constants/communication';
 import { speak } from '../services/speech';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationItem } from '../types/communication';
+import type { EmergencyContact } from '../types/emergency';
 
 interface ComunicarScreenProps {
   itemsByCategory: Record<string, CommunicationItem[]>;
+  emergencyContacts: EmergencyContact[];
 }
 
-export function ComunicarScreen({ itemsByCategory }: ComunicarScreenProps) {
+export function ComunicarScreen({ itemsByCategory, emergencyContacts }: ComunicarScreenProps) {
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
   const [confirmedItem, setConfirmedItem] = useState<CommunicationItem | null>(null);
+  const [showSOS, setShowSOS] = useState(false);
 
   useEffect(() => {
     if (!confirmedItem) return;
@@ -32,6 +37,7 @@ export function ComunicarScreen({ itemsByCategory }: ComunicarScreenProps) {
 
   return (
     <View style={styles.container}>
+      <SosBar onPress={() => setShowSOS(true)} />
       {!openCategory ? (
         <>
           <Text style={styles.sectionLabel}>O que você quer dizer?</Text>
@@ -108,6 +114,12 @@ export function ComunicarScreen({ itemsByCategory }: ComunicarScreenProps) {
           </View>
         </View>
       ) : null}
+
+      <EmergencySheet
+        visible={showSOS}
+        contacts={emergencyContacts}
+        onClose={() => setShowSOS(false)}
+      />
     </View>
   );
 }
