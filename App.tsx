@@ -17,7 +17,8 @@ import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
 import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
 import { confirmVerificationCode, sendVerificationCode, signOut } from './src/services/auth';
 import { firebaseConfig } from './src/services/firebase';
-import { addItem, removeItem } from './src/services/items';
+import { addItem, clearItemPhoto, removeItem, setItemPhoto } from './src/services/items';
+import { generateLocalId, uploadItemPhoto } from './src/services/storage';
 import { colors } from './src/theme/colors';
 
 export default function App() {
@@ -69,18 +70,44 @@ export default function App() {
     setErrorMessage(null);
   }
 
-  function handleAddItem(category: string, name: string, emoji: string) {
+  async function handleAddItem(category: string, name: string, emoji: string, photoUri?: string) {
     if (!user) return;
-    addItem(user.uid, category, name, emoji).catch((error: unknown) => {
+    try {
+      const photoUrl = photoUri
+        ? await uploadItemPhoto(user.uid, generateLocalId(), photoUri)
+        : undefined;
+      await addItem(user.uid, category, name, emoji, photoUrl);
+    } catch (error) {
       console.error('Falha ao adicionar item:', error);
-    });
+    }
   }
 
-  function handleRemoveItem(itemId: string) {
+  async function handleRemoveItem(itemId: string) {
     if (!user) return;
-    removeItem(user.uid, itemId).catch((error: unknown) => {
+    try {
+      await removeItem(user.uid, itemId);
+    } catch (error) {
       console.error('Falha ao remover item:', error);
-    });
+    }
+  }
+
+  async function handleSetItemPhoto(itemId: string, photoUri: string) {
+    if (!user) return;
+    try {
+      const photoUrl = await uploadItemPhoto(user.uid, itemId, photoUri);
+      await setItemPhoto(user.uid, itemId, photoUrl);
+    } catch (error) {
+      console.error('Falha ao definir foto do item:', error);
+    }
+  }
+
+  async function handleClearItemPhoto(itemId: string) {
+    if (!user) return;
+    try {
+      await clearItemPhoto(user.uid, itemId);
+    } catch (error) {
+      console.error('Falha ao remover foto do item:', error);
+    }
   }
 
   if (!fontsLoaded || initializing) {
@@ -101,6 +128,8 @@ export default function App() {
             itemsByCategory={itemsByCategory}
             onAddItem={handleAddItem}
             onRemoveItem={handleRemoveItem}
+            onSetItemPhoto={handleSetItemPhoto}
+            onClearItemPhoto={handleClearItemPhoto}
             onClose={() => setShowAdmin(false)}
             onSignOut={signOut}
           />
