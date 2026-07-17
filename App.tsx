@@ -2,16 +2,17 @@ import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { StatusBar } from 'expo-status-bar';
 import type { ConfirmationResult } from 'firebase/auth';
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
+import { AppHeader } from './src/components/AppHeader';
 import { useAppFonts } from './src/hooks/useAppFonts';
 import { useAuth } from './src/hooks/useAuth';
+import { ComunicarScreen } from './src/screens/ComunicarScreen';
 import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
 import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
 import { confirmVerificationCode, sendVerificationCode, signOut } from './src/services/auth';
 import { firebaseConfig } from './src/services/firebase';
 import { colors } from './src/theme/colors';
-import { fonts, fontSizes } from './src/theme/typography';
 
 export default function App() {
   const [fontsLoaded] = useAppFonts();
@@ -72,12 +73,10 @@ export default function App() {
         attemptInvisibleVerification
       />
       {user ? (
-        <View style={styles.authenticated}>
-          <Text style={styles.welcome}>Olá, {user.displayName || 'paciente'} 👋</Text>
-          <Text style={styles.welcomeSub} onPress={signOut}>
-            Sair
-          </Text>
-        </View>
+        <>
+          <AppHeader rightLabel="Sair" onRightPress={signOut} />
+          <ComunicarScreen />
+        </>
       ) : confirmation ? (
         <VerifyCodeScreen
           phone={pendingPhone}
@@ -102,22 +101,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  authenticated: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  welcome: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.heading,
-    color: colors.primaryDark,
-  },
-  welcomeSub: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.body,
-    color: colors.muted,
-    textDecorationLine: 'underline',
   },
 });
