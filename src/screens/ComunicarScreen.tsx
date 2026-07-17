@@ -23,7 +23,12 @@ export function ComunicarScreen() {
   }
 
   const openCategory = CATEGORIES.find((category) => category.key === openCategoryKey);
-  const items = openCategoryKey ? (DEFAULT_ITEMS[openCategoryKey] ?? []) : [];
+  const items: CommunicationItem[] = openCategoryKey
+    ? (DEFAULT_ITEMS[openCategoryKey] ?? []).map((item, index) => ({
+        id: `${openCategoryKey}-${index}`,
+        ...item,
+      }))
+    : [];
 
   return (
     <View style={styles.container}>
