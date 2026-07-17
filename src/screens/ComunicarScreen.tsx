@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { CATEGORIES, CATEGORY_COLORS, DEFAULT_ITEMS } from '../constants/communication';
+import { CATEGORIES, CATEGORY_COLORS } from '../constants/communication';
 import { speak } from '../services/speech';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationItem } from '../types/communication';
 
-export function ComunicarScreen() {
+interface ComunicarScreenProps {
+  itemsByCategory: Record<string, CommunicationItem[]>;
+}
+
+export function ComunicarScreen({ itemsByCategory }: ComunicarScreenProps) {
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
   const [confirmedItem, setConfirmedItem] = useState<CommunicationItem | null>(null);
 
@@ -23,12 +27,7 @@ export function ComunicarScreen() {
   }
 
   const openCategory = CATEGORIES.find((category) => category.key === openCategoryKey);
-  const items: CommunicationItem[] = openCategoryKey
-    ? (DEFAULT_ITEMS[openCategoryKey] ?? []).map((item, index) => ({
-        id: `${openCategoryKey}-${index}`,
-        ...item,
-      }))
-    : [];
+  const items = openCategoryKey ? (itemsByCategory[openCategoryKey] ?? []) : [];
 
   return (
     <View style={styles.container}>

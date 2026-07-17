@@ -10,6 +10,7 @@ import {
 } from './src/components/RecaptchaVerifierModal';
 import { useAppFonts } from './src/hooks/useAppFonts';
 import { useAuth } from './src/hooks/useAuth';
+import { useItems } from './src/hooks/useItems';
 import { ComunicarScreen } from './src/screens/ComunicarScreen';
 import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
 import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
@@ -20,6 +21,7 @@ import { colors } from './src/theme/colors';
 export default function App() {
   const [fontsLoaded] = useAppFonts();
   const { user, initializing } = useAuth();
+  const { itemsByCategory } = useItems(user?.uid ?? null);
   const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
 
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
@@ -79,7 +81,7 @@ export default function App() {
       {user ? (
         <>
           <AppHeader rightLabel="Sair" onRightPress={signOut} />
-          <ComunicarScreen />
+          <ComunicarScreen itemsByCategory={itemsByCategory} />
         </>
       ) : confirmation ? (
         <VerifyCodeScreen
