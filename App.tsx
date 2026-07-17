@@ -11,11 +11,13 @@ import {
 import { useAppFonts } from './src/hooks/useAppFonts';
 import { useAuth } from './src/hooks/useAuth';
 import { useItems } from './src/hooks/useItems';
+import { AdminScreen } from './src/screens/AdminScreen';
 import { ComunicarScreen } from './src/screens/ComunicarScreen';
 import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
 import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
 import { confirmVerificationCode, sendVerificationCode, signOut } from './src/services/auth';
 import { firebaseConfig } from './src/services/firebase';
+import { addItem, removeItem } from './src/services/items';
 import { colors } from './src/theme/colors';
 
 export default function App() {
@@ -29,6 +31,7 @@ export default function App() {
   const [pendingPhone, setPendingPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   async function handleLoginSubmit({ name, phone }: LoginFormData) {
     if (!recaptchaVerifier.current) return;
@@ -66,6 +69,20 @@ export default function App() {
     setErrorMessage(null);
   }
 
+  function handleAddItem(category: string, name: string, emoji: string) {
+    if (!user) return;
+    addItem(user.uid, category, name, emoji).catch((error: unknown) => {
+      console.error('Falha ao adicionar item:', error);
+    });
+  }
+
+  function handleRemoveItem(itemId: string) {
+    if (!user) return;
+    removeItem(user.uid, itemId).catch((error: unknown) => {
+      console.error('Falha ao remover item:', error);
+    });
+  }
+
   if (!fontsLoaded || initializing) {
     return <View style={styles.container} />;
   }
@@ -79,10 +96,20 @@ export default function App() {
         cancelLabel="Cancelar"
       />
       {user ? (
-        <>
-          <AppHeader rightLabel="Sair" onRightPress={signOut} />
-          <ComunicarScreen itemsByCategory={itemsByCategory} />
-        </>
+        showAdmin ? (
+          <AdminScreen
+            itemsByCategory={itemsByCategory}
+            onAddItem={handleAddItem}
+            onRemoveItem={handleRemoveItem}
+            onClose={() => setShowAdmin(false)}
+            onSignOut={signOut}
+          />
+        ) : (
+          <>
+            <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdmin(true)} />
+            <ComunicarScreen itemsByCategory={itemsByCategory} />
+          </>
+        )
       ) : confirmation ? (
         <VerifyCodeScreen
           phone={pendingPhone}
