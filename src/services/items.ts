@@ -2,10 +2,12 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDocs,
   onSnapshot,
   serverTimestamp,
+  updateDoc,
   writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
@@ -13,6 +15,7 @@ import {
 import { DEFAULT_ITEMS } from '../constants/communication';
 import type { CommunicationItem } from '../types/communication';
 import { firestore } from './firebase';
+import { deleteItemPhoto } from './storage';
 
 function itemsCollection(uid: string) {
   return collection(firestore, 'users', uid, 'items');
@@ -48,12 +51,29 @@ export async function addItem(
   category: string,
   name: string,
   emoji: string,
+  photoUrl?: string,
 ): Promise<void> {
-  await addDoc(itemsCollection(uid), { category, name, emoji, createdAt: serverTimestamp() });
+  await addDoc(itemsCollection(uid), {
+    category,
+    name,
+    emoji,
+    ...(photoUrl ? { photoUrl } : {}),
+    createdAt: serverTimestamp(),
+  });
 }
 
 export async function removeItem(uid: string, itemId: string): Promise<void> {
   await deleteDoc(doc(itemsCollection(uid), itemId));
+  await deleteItemPhoto(uid, itemId);
+}
+
+export async function setItemPhoto(uid: string, itemId: string, photoUrl: string): Promise<void> {
+  await updateDoc(doc(itemsCollection(uid), itemId), { photoUrl });
+}
+
+export async function clearItemPhoto(uid: string, itemId: string): Promise<void> {
+  await updateDoc(doc(itemsCollection(uid), itemId), { photoUrl: deleteField() });
+  await deleteItemPhoto(uid, itemId);
 }
 
 export async function seedDefaultItemsIfEmpty(uid: string): Promise<void> {
