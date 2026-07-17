@@ -37,7 +37,8 @@ export default function App() {
       setConfirmation(result);
       setPendingName(name);
       setPendingPhone(phone);
-    } catch {
+    } catch (error) {
+      console.error('Falha ao enviar codigo de verificacao:', error);
       setErrorMessage('Não foi possível enviar o código. Confira o número e tente novamente.');
     } finally {
       setIsSubmitting(false);
@@ -50,7 +51,8 @@ export default function App() {
     setErrorMessage(null);
     try {
       await confirmVerificationCode(confirmation, code, pendingName);
-    } catch {
+    } catch (error) {
+      console.error('Falha ao confirmar codigo:', error);
       setErrorMessage('Código incorreto. Tente novamente.');
     } finally {
       setIsSubmitting(false);

@@ -17,6 +17,9 @@ import { fonts, fontSizes } from '../theme/typography';
 export interface RecaptchaVerifierHandle {
   readonly type: 'recaptcha';
   verify(): Promise<string>;
+  // Firebase Auth chama isso internamente apos o uso do verificador.
+  // https://github.com/expo/expo/issues/14780
+  _reset(): void;
 }
 
 interface RecaptchaVerifierModalProps {
@@ -79,6 +82,7 @@ export const RecaptchaVerifierModal = forwardRef<
         setLoaded(false);
         setVisible(true);
       }),
+    _reset: () => {},
   }));
 
   function handleMessage(event: WebViewMessageEvent) {
