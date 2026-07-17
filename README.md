@@ -52,6 +52,8 @@ Definidas em `.env` (veja `.env.example`), todas com prefixo `EXPO_PUBLIC_` para
 
 No console do Firebase, o provedor **Phone** precisa estar habilitado em Authentication > Sign-in method. Para testar sem consumir SMS reais, cadastre números de teste em Authentication > Sign-in method > Phone numbers for testing.
 
+O login envia o código de verificação usando `signInWithPhoneNumber` com um reCAPTCHA em WebView (`expo-firebase-recaptcha`), funcionando direto no Expo Go, sem precisar gerar build nativa.
+
 ## Estrutura de pastas
 
 ```
