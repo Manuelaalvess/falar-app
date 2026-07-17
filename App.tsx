@@ -1,10 +1,13 @@
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { StatusBar } from 'expo-status-bar';
 import type { ConfirmationResult } from 'firebase/auth';
 import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppHeader } from './src/components/AppHeader';
+import {
+  type RecaptchaVerifierHandle,
+  RecaptchaVerifierModal,
+} from './src/components/RecaptchaVerifierModal';
 import { useAppFonts } from './src/hooks/useAppFonts';
 import { useAuth } from './src/hooks/useAuth';
 import { ComunicarScreen } from './src/screens/ComunicarScreen';
@@ -17,7 +20,7 @@ import { colors } from './src/theme/colors';
 export default function App() {
   const [fontsLoaded] = useAppFonts();
   const { user, initializing } = useAuth();
-  const recaptchaVerifier = useRef<FirebaseRecaptchaVerifierModal>(null);
+  const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
 
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
   const [pendingName, setPendingName] = useState('');
@@ -65,12 +68,11 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <FirebaseRecaptchaVerifierModal
+      <RecaptchaVerifierModal
         ref={recaptchaVerifier}
         firebaseConfig={firebaseConfig}
         title="Verificação de segurança"
         cancelLabel="Cancelar"
-        attemptInvisibleVerification
       />
       {user ? (
         <>
