@@ -50,6 +50,8 @@ Definidas em `.env` (veja `.env.example`), todas com prefixo `EXPO_PUBLIC_` para
 | `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Sender ID                           |
 | `EXPO_PUBLIC_FIREBASE_APP_ID`              | ID do app no Firebase               |
 
+No console do Firebase, o provedor **Phone** precisa estar habilitado em Authentication > Sign-in method. Para testar sem consumir SMS reais, cadastre números de teste em Authentication > Sign-in method > Phone numbers for testing.
+
 ## Estrutura de pastas
 
 ```
