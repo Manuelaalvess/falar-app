@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -70,7 +71,15 @@ export function ComunicarScreen({ itemsByCategory }: ComunicarScreenProps) {
                   style={styles.itemTile}
                   onPress={() => handleChooseItem(item)}
                 >
-                  <Text style={styles.tileEmoji}>{item.emoji}</Text>
+                  {item.photoUrl ? (
+                    <Image
+                      source={{ uri: item.photoUrl }}
+                      style={styles.itemPhoto}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <Text style={styles.tileEmoji}>{item.emoji}</Text>
+                  )}
                   <Text style={styles.itemLabel}>{item.name}</Text>
                 </Pressable>
               ))}
@@ -86,7 +95,15 @@ export function ComunicarScreen({ itemsByCategory }: ComunicarScreenProps) {
       {confirmedItem ? (
         <View style={styles.confirmOverlay}>
           <View style={styles.confirmCard}>
-            <Text style={styles.confirmEmoji}>{confirmedItem.emoji}</Text>
+            {confirmedItem.photoUrl ? (
+              <Image
+                source={{ uri: confirmedItem.photoUrl }}
+                style={styles.confirmPhoto}
+                contentFit="cover"
+              />
+            ) : (
+              <Text style={styles.confirmEmoji}>{confirmedItem.emoji}</Text>
+            )}
             <Text style={styles.confirmLabel}>{confirmedItem.name}</Text>
           </View>
         </View>
@@ -143,6 +160,11 @@ const styles = StyleSheet.create({
   },
   tileEmoji: {
     fontSize: 34,
+  },
+  itemPhoto: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
   },
   tileLabel: {
     fontFamily: fonts.heading,
@@ -204,6 +226,11 @@ const styles = StyleSheet.create({
   },
   confirmEmoji: {
     fontSize: 64,
+  },
+  confirmPhoto: {
+    width: 96,
+    height: 96,
+    borderRadius: 20,
   },
   confirmLabel: {
     fontFamily: fonts.headingBold,
