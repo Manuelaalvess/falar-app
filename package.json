@@ -10,6 +10,7 @@
     "expo-firebase-core": "^6.0.0",
     "expo-firebase-recaptcha": "^2.3.1",
     "expo-font": "~57.0.1",
+    "expo-speech": "~57.0.1",
     "expo-splash-screen": "~57.0.4",
     "expo-status-bar": "~57.0.1",
     "firebase": "^12.16.0",
