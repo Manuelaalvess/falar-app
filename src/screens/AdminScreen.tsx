@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { CATEGORIES, EMOJI_CHOICES } from '../constants/communication';
+import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationCategory, CommunicationItem } from '../types/communication';
@@ -12,12 +13,10 @@ import type { EmergencyContact } from '../types/emergency';
 type AdminTab = 'perfil' | 'emergencia';
 
 interface AdminScreenProps {
-  itemsByCategory: Record<string, CommunicationItem[]>;
   onAddItem: (category: string, name: string, emoji: string, photoUri?: string) => void;
   onRemoveItem: (itemId: string) => void;
   onSetItemPhoto: (itemId: string, photoUri: string) => void;
   onClearItemPhoto: (itemId: string) => void;
-  emergencyContacts: EmergencyContact[];
   onAddContact: (name: string, relation: string, phone: string, emoji: string) => void;
   onRemoveContact: (contactId: string) => void;
   onClose: () => void;
@@ -25,17 +24,17 @@ interface AdminScreenProps {
 }
 
 export function AdminScreen({
-  itemsByCategory,
   onAddItem,
   onRemoveItem,
   onSetItemPhoto,
   onClearItemPhoto,
-  emergencyContacts,
   onAddContact,
   onRemoveContact,
   onClose,
   onSignOut,
 }: AdminScreenProps) {
+  const itemsByCategory = useAppStore((state) => state.itemsByCategory);
+  const emergencyContacts = useAppStore((state) => state.emergencyContacts);
   const [tab, setTab] = useState<AdminTab>('perfil');
 
   return (

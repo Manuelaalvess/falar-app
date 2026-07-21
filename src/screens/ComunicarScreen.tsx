@@ -6,17 +6,14 @@ import { EmergencySheet } from '../components/EmergencySheet';
 import { SosBar } from '../components/SosBar';
 import { CATEGORIES, CATEGORY_COLORS } from '../constants/communication';
 import { speak } from '../services/speech';
+import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationItem } from '../types/communication';
-import type { EmergencyContact } from '../types/emergency';
 
-interface ComunicarScreenProps {
-  itemsByCategory: Record<string, CommunicationItem[]>;
-  emergencyContacts: EmergencyContact[];
-}
-
-export function ComunicarScreen({ itemsByCategory, emergencyContacts }: ComunicarScreenProps) {
+export function ComunicarScreen() {
+  const itemsByCategory = useAppStore((state) => state.itemsByCategory);
+  const emergencyContacts = useAppStore((state) => state.emergencyContacts);
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
   const [confirmedItem, setConfirmedItem] = useState<CommunicationItem | null>(null);
   const [showSOS, setShowSOS] = useState(false);

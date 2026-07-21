@@ -21,13 +21,16 @@ import { addContact, removeContact } from './src/services/emergency';
 import { firebaseConfig } from './src/services/firebase';
 import { addItem, clearItemPhoto, removeItem, setItemPhoto } from './src/services/items';
 import { generateLocalId, uploadItemPhoto } from './src/services/storage';
+import { useAppStore } from './src/store/useAppStore';
 import { colors } from './src/theme/colors';
 
 export default function App() {
   const [fontsLoaded] = useAppFonts();
   const { user, initializing } = useAuth();
-  const { itemsByCategory } = useItems(user?.uid ?? null);
-  const { contacts: emergencyContacts } = useEmergencyContacts(user?.uid ?? null);
+  useItems(user?.uid ?? null);
+  useEmergencyContacts(user?.uid ?? null);
+  const showAdmin = useAppStore((state) => state.showAdmin);
+  const setShowAdmin = useAppStore((state) => state.setShowAdmin);
   const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
 
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
@@ -35,7 +38,6 @@ export default function App() {
   const [pendingPhone, setPendingPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showAdmin, setShowAdmin] = useState(false);
 
   async function handleLoginSubmit({ name, phone }: LoginFormData) {
     if (!recaptchaVerifier.current) return;
@@ -146,12 +148,10 @@ export default function App() {
       {user ? (
         showAdmin ? (
           <AdminScreen
-            itemsByCategory={itemsByCategory}
             onAddItem={handleAddItem}
             onRemoveItem={handleRemoveItem}
             onSetItemPhoto={handleSetItemPhoto}
             onClearItemPhoto={handleClearItemPhoto}
-            emergencyContacts={emergencyContacts}
             onAddContact={handleAddContact}
             onRemoveContact={handleRemoveContact}
             onClose={() => setShowAdmin(false)}
@@ -160,10 +160,7 @@ export default function App() {
         ) : (
           <>
             <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdmin(true)} />
-            <ComunicarScreen
-              itemsByCategory={itemsByCategory}
-              emergencyContacts={emergencyContacts}
-            />
+            <ComunicarScreen />
           </>
         )
       ) : confirmation ? (

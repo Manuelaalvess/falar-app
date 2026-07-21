@@ -1,20 +1,19 @@
 import { useEffect, useState } from 'react';
 
 import { seedDefaultContactsIfEmpty, subscribeToContacts } from '../services/emergency';
-import type { EmergencyContact } from '../types/emergency';
+import { useAppStore } from '../store/useAppStore';
 
 interface EmergencyContactsState {
-  contacts: EmergencyContact[];
   loading: boolean;
 }
 
 export function useEmergencyContacts(uid: string | null): EmergencyContactsState {
-  const [contacts, setContacts] = useState<EmergencyContact[]>([]);
+  const setEmergencyContacts = useAppStore((state) => state.setEmergencyContacts);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!uid) {
-      setContacts([]);
+      setEmergencyContacts([]);
       setLoading(true);
       return;
     }
@@ -25,12 +24,12 @@ export function useEmergencyContacts(uid: string | null): EmergencyContactsState
     });
 
     const unsubscribe = subscribeToContacts(uid, (list) => {
-      setContacts(list);
+      setEmergencyContacts(list);
       setLoading(false);
     });
 
     return unsubscribe;
-  }, [uid]);
+  }, [uid, setEmergencyContacts]);
 
-  return { contacts, loading };
+  return { loading };
 }

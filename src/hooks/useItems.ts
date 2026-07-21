@@ -1,15 +1,14 @@
 import { useEffect, useState } from 'react';
 
 import { seedDefaultItemsIfEmpty, subscribeToItems } from '../services/items';
-import type { CommunicationItem } from '../types/communication';
+import { useAppStore } from '../store/useAppStore';
 
 interface ItemsState {
-  itemsByCategory: Record<string, CommunicationItem[]>;
   loading: boolean;
 }
 
 export function useItems(uid: string | null): ItemsState {
-  const [itemsByCategory, setItemsByCategory] = useState<Record<string, CommunicationItem[]>>({});
+  const setItemsByCategory = useAppStore((state) => state.setItemsByCategory);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,7 +29,7 @@ export function useItems(uid: string | null): ItemsState {
     });
 
     return unsubscribe;
-  }, [uid]);
+  }, [uid, setItemsByCategory]);
 
-  return { itemsByCategory, loading };
+  return { loading };
 }
