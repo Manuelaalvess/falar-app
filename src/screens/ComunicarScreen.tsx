@@ -5,7 +5,9 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { EmergencySheet } from '../components/EmergencySheet';
 import { SosBar } from '../components/SosBar';
 import { CATEGORIES, CATEGORY_COLORS } from '../constants/communication';
+import { getRecordingUri } from '../services/audioRecordings';
 import { logEvent } from '../services/evolution';
+import { playSound } from '../services/recording';
 import { speak } from '../services/speech';
 import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
@@ -39,7 +41,15 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
   const openCategory = CATEGORIES.find((category) => category.key === openCategoryKey);
 
   function handleChooseItem(item: CommunicationItem) {
-    speak(item.name);
+    const recordingUri = getRecordingUri(item.id);
+    if (recordingUri) {
+      playSound(recordingUri).catch((error: unknown) => {
+        console.error('Falha ao tocar gravacao, usando voz sintetica:', error);
+        speak(item.name);
+      });
+    } else {
+      speak(item.name);
+    }
     setConfirmedItem(item);
     if (openCategory) {
       logEvent(uid, openCategory.key, openCategory.label, item.name).catch((error: unknown) => {

@@ -5,7 +5,9 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { VoiceRecorderModal } from '../components/VoiceRecorderModal';
 import { CATEGORIES, EMOJI_CHOICES } from '../constants/communication';
+import { deleteRecording, getRecordingUri, saveRecording } from '../services/audioRecordings';
 import { type FontScale, useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
@@ -262,6 +264,8 @@ function CategoryBlock({
     defaultValues: { name: '', emoji: EMOJI_CHOICES[0] },
   });
   const [pendingPhotoUri, setPendingPhotoUri] = useState<string | null>(null);
+  const [activeRecordingItem, setActiveRecordingItem] = useState<CommunicationItem | null>(null);
+  const [, bumpRecordingsVersion] = useState(0);
 
   async function handlePickPhotoForNew() {
     const uri = await pickPhoto();
@@ -271,6 +275,18 @@ function CategoryBlock({
   async function handlePickPhotoForExisting(itemId: string) {
     const uri = await pickPhoto();
     if (uri) onSetItemPhoto(itemId, uri);
+  }
+
+  function handleSaveRecording(temporaryUri: string) {
+    if (!activeRecordingItem) return;
+    saveRecording(activeRecordingItem.id, temporaryUri);
+    bumpRecordingsVersion((version) => version + 1);
+  }
+
+  function handleDeleteRecording() {
+    if (!activeRecordingItem) return;
+    deleteRecording(activeRecordingItem.id);
+    bumpRecordingsVersion((version) => version + 1);
   }
 
   function onSubmit(values: ItemFormValues) {
@@ -297,6 +313,9 @@ function CategoryBlock({
               <Text style={styles.itemEmoji}>{item.emoji}</Text>
             )}
             <Text style={styles.itemName}>{item.name}</Text>
+            <Pressable style={styles.photoButton} onPress={() => setActiveRecordingItem(item)}>
+              <Text style={styles.photoButtonLabel}>{getRecordingUri(item.id) ? '🔊' : '🎤'}</Text>
+            </Pressable>
             <Pressable
               style={styles.photoButton}
               onPress={() => handlePickPhotoForExisting(item.id)}
@@ -375,6 +394,17 @@ function CategoryBlock({
           Foto é opcional — sem foto, o item usa o símbolo escolhido.
         </Text>
       )}
+
+      <VoiceRecorderModal
+        visible={activeRecordingItem !== null}
+        itemName={activeRecordingItem?.name ?? ''}
+        hasExistingRecording={
+          activeRecordingItem ? getRecordingUri(activeRecordingItem.id) !== null : false
+        }
+        onClose={() => setActiveRecordingItem(null)}
+        onSave={handleSaveRecording}
+        onDeleteRecording={handleDeleteRecording}
+      />
     </View>
   );
 }

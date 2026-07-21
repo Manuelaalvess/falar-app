@@ -37,6 +37,12 @@
         {
           "locationWhenInUsePermission": "O app usa sua localização para enviar por SMS aos contatos de emergência quando você tocar em pedir ajuda."
         }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": "O app usa o microfone para a família gravar a própria voz dizendo as palavras dos itens de comunicação."
+        }
       ]
     ]
   }
