@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { EmergencySheet } from '../components/EmergencySheet';
 import { SosBar } from '../components/SosBar';
@@ -34,66 +34,68 @@ export function ComunicarScreen() {
 
   return (
     <View style={styles.container}>
-      <SosBar onPress={() => setShowSOS(true)} />
-      {!openCategory ? (
-        <>
-          <Text style={styles.sectionLabel}>O que você quer dizer?</Text>
-          <View style={styles.grid}>
-            {CATEGORIES.map((category) => {
-              const categoryColors = CATEGORY_COLORS[category.key];
-              return (
-                <Pressable
-                  key={category.key}
-                  style={[styles.categoryTile, { backgroundColor: categoryColors.background }]}
-                  onPress={() => setOpenCategoryKey(category.key)}
-                >
-                  <Text style={styles.tileEmoji}>{category.emoji}</Text>
-                  <Text style={[styles.tileLabel, { color: categoryColors.foreground }]}>
-                    {category.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </>
-      ) : (
-        <>
-          <View style={styles.backRow}>
-            <Pressable style={styles.backButton} onPress={() => setOpenCategoryKey(null)}>
-              <Text style={styles.backButtonLabel}>←</Text>
-            </Pressable>
-            <Text style={styles.sectionLabelInline}>
-              {openCategory.emoji} {openCategory.label}
-            </Text>
-          </View>
-          {items.length > 0 ? (
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <SosBar onPress={() => setShowSOS(true)} />
+        {!openCategory ? (
+          <>
+            <Text style={styles.sectionLabel}>O que você quer dizer?</Text>
             <View style={styles.grid}>
-              {items.map((item) => (
-                <Pressable
-                  key={item.id}
-                  style={styles.itemTile}
-                  onPress={() => handleChooseItem(item)}
-                >
-                  {item.photoUrl ? (
-                    <Image
-                      source={{ uri: item.photoUrl }}
-                      style={styles.itemPhoto}
-                      contentFit="cover"
-                    />
-                  ) : (
-                    <Text style={styles.tileEmoji}>{item.emoji}</Text>
-                  )}
-                  <Text style={styles.itemLabel}>{item.name}</Text>
-                </Pressable>
-              ))}
+              {CATEGORIES.map((category) => {
+                const categoryColors = CATEGORY_COLORS[category.key];
+                return (
+                  <Pressable
+                    key={category.key}
+                    style={[styles.categoryTile, { backgroundColor: categoryColors.background }]}
+                    onPress={() => setOpenCategoryKey(category.key)}
+                  >
+                    <Text style={styles.tileEmoji}>{category.emoji}</Text>
+                    <Text style={[styles.tileLabel, { color: categoryColors.foreground }]}>
+                      {category.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
-          ) : (
-            <Text style={styles.emptyText}>
-              Nenhum item ainda aqui.{'\n'}Peça para a família adicionar na Área da família.
-            </Text>
-          )}
-        </>
-      )}
+          </>
+        ) : (
+          <>
+            <View style={styles.backRow}>
+              <Pressable style={styles.backButton} onPress={() => setOpenCategoryKey(null)}>
+                <Text style={styles.backButtonLabel}>←</Text>
+              </Pressable>
+              <Text style={styles.sectionLabelInline}>
+                {openCategory.emoji} {openCategory.label}
+              </Text>
+            </View>
+            {items.length > 0 ? (
+              <View style={styles.grid}>
+                {items.map((item) => (
+                  <Pressable
+                    key={item.id}
+                    style={styles.itemTile}
+                    onPress={() => handleChooseItem(item)}
+                  >
+                    {item.photoUrl ? (
+                      <Image
+                        source={{ uri: item.photoUrl }}
+                        style={styles.itemPhoto}
+                        contentFit="cover"
+                      />
+                    ) : (
+                      <Text style={styles.tileEmoji}>{item.emoji}</Text>
+                    )}
+                    <Text style={styles.itemLabel}>{item.name}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.emptyText}>
+                Nenhum item ainda aqui.{'\n'}Peça para a família adicionar na Área da família.
+              </Text>
+            )}
+          </>
+        )}
+      </ScrollView>
 
       {confirmedItem ? (
         <View style={styles.confirmOverlay}>
@@ -124,7 +126,10 @@ export function ComunicarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 18,
+    flexGrow: 1,
   },
   sectionLabel: {
     fontFamily: fonts.headingBold,

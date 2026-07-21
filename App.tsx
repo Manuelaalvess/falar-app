@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import type { ConfirmationResult } from 'firebase/auth';
 import { useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from './src/components/AppHeader';
 import {
@@ -134,52 +135,58 @@ export default function App() {
   }
 
   if (!fontsLoaded || initializing) {
-    return <View style={styles.container} />;
+    return (
+      <SafeAreaProvider>
+        <View style={styles.container} />
+      </SafeAreaProvider>
+    );
   }
 
   return (
-    <View style={styles.container}>
-      <RecaptchaVerifierModal
-        ref={recaptchaVerifier}
-        firebaseConfig={firebaseConfig}
-        title="Verificação de segurança"
-        cancelLabel="Cancelar"
-      />
-      {user ? (
-        showAdmin ? (
-          <AdminScreen
-            onAddItem={handleAddItem}
-            onRemoveItem={handleRemoveItem}
-            onSetItemPhoto={handleSetItemPhoto}
-            onClearItemPhoto={handleClearItemPhoto}
-            onAddContact={handleAddContact}
-            onRemoveContact={handleRemoveContact}
-            onClose={() => setShowAdmin(false)}
-            onSignOut={signOut}
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <RecaptchaVerifierModal
+          ref={recaptchaVerifier}
+          firebaseConfig={firebaseConfig}
+          title="Verificação de segurança"
+          cancelLabel="Cancelar"
+        />
+        {user ? (
+          showAdmin ? (
+            <AdminScreen
+              onAddItem={handleAddItem}
+              onRemoveItem={handleRemoveItem}
+              onSetItemPhoto={handleSetItemPhoto}
+              onClearItemPhoto={handleClearItemPhoto}
+              onAddContact={handleAddContact}
+              onRemoveContact={handleRemoveContact}
+              onClose={() => setShowAdmin(false)}
+              onSignOut={signOut}
+            />
+          ) : (
+            <>
+              <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdmin(true)} />
+              <ComunicarScreen />
+            </>
+          )
+        ) : confirmation ? (
+          <VerifyCodeScreen
+            phone={pendingPhone}
+            onConfirm={handleConfirmCode}
+            onBack={handleBackToLogin}
+            isSubmitting={isSubmitting}
+            errorMessage={errorMessage}
           />
         ) : (
-          <>
-            <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdmin(true)} />
-            <ComunicarScreen />
-          </>
-        )
-      ) : confirmation ? (
-        <VerifyCodeScreen
-          phone={pendingPhone}
-          onConfirm={handleConfirmCode}
-          onBack={handleBackToLogin}
-          isSubmitting={isSubmitting}
-          errorMessage={errorMessage}
-        />
-      ) : (
-        <LoginScreen
-          onSubmit={handleLoginSubmit}
-          isSubmitting={isSubmitting}
-          errorMessage={errorMessage}
-        />
-      )}
-      <StatusBar style="dark" />
-    </View>
+          <LoginScreen
+            onSubmit={handleLoginSubmit}
+            isSubmitting={isSubmitting}
+            errorMessage={errorMessage}
+          />
+        )}
+        <StatusBar style="dark" />
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
