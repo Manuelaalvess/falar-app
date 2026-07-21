@@ -4,13 +4,14 @@ import {
   Alert,
   Linking,
   Modal,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 
+import { toE164BR } from '../services/auth';
+import { buildEmergencySmsBody, buildSmsUrl } from '../services/emergencyActions';
 import { getCurrentLocationMapsUrl } from '../services/location';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
@@ -22,19 +23,17 @@ interface EmergencySheetProps {
   onClose: () => void;
 }
 
-function buildSmsUrl(phone: string, body: string): string {
-  const digits = phone.replace(/\D/g, '');
-  const encodedBody = encodeURIComponent(body);
-  const separator = Platform.OS === 'ios' ? '&' : '?';
-  return `sms:${digits}${separator}body=${encodedBody}`;
-}
-
 export function EmergencySheet({ visible, contacts, onClose }: EmergencySheetProps) {
   const [sendingLocationFor, setSendingLocationFor] = useState<string | null>(null);
   const callable = contacts.filter((contact) => contact.phone.trim().length > 0);
 
-  function handleCall(phone: string) {
-    Linking.openURL(`tel:${phone.replace(/\D/g, '')}`);
+  function handleCall(contact: EmergencyContact) {
+    // Confirmacao evita ligacao acidental: paciente pode tocar na tela sem querer
+    // (dificuldade motora e comum apos AVC).
+    Alert.alert(`Ligar para ${contact.name}?`, contact.relation, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Ligar', onPress: () => Linking.openURL(`tel:${toE164BR(contact.phone)}`) },
+    ]);
   }
 
   async function handleSendLocation(contact: EmergencyContact) {
@@ -48,7 +47,7 @@ export function EmergencySheet({ visible, contacts, onClose }: EmergencySheetPro
         );
         return;
       }
-      const body = `Preciso de ajuda. Minha localização: ${mapsUrl}`;
+      const body = buildEmergencySmsBody(mapsUrl);
       Linking.openURL(buildSmsUrl(contact.phone, body));
     } catch {
       Alert.alert('Não foi possível obter sua localização', 'Tente novamente em alguns segundos.');
@@ -71,7 +70,7 @@ export function EmergencySheet({ visible, contacts, onClose }: EmergencySheetPro
                   <Text style={styles.contactRelation}>{contact.relation}</Text>
                 </View>
                 <View style={styles.contactActions}>
-                  <Pressable style={styles.callButton} onPress={() => handleCall(contact.phone)}>
+                  <Pressable style={styles.callButton} onPress={() => handleCall(contact)}>
                     <Text style={styles.callButtonLabel}>📞 Ligar</Text>
                   </Pressable>
                   <Pressable

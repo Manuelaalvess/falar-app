@@ -1,11 +1,14 @@
-import { Image } from 'expo-image';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { EmergencySheet } from '../components/EmergencySheet';
 import { SosBar } from '../components/SosBar';
 import { CATEGORIES, CATEGORY_COLORS } from '../constants/communication';
 import { getRecordingUri } from '../services/audioRecordings';
+import {
+  getPrimaryEmergencyContact,
+  triggerDoubleTapEmergency,
+} from '../services/emergencyActions';
 import { logEvent } from '../services/evolution';
 import { playSound } from '../services/recording';
 import { speak } from '../services/speech';
@@ -30,6 +33,7 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
   const [confirmedItem, setConfirmedItem] = useState<CommunicationItem | null>(null);
   const [showSOS, setShowSOS] = useState(false);
+  const [sosBusy, setSosBusy] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
   useEffect(() => {
@@ -90,10 +94,48 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
     }
   }
 
+  async function handleSosDoublePress() {
+    const primary = getPrimaryEmergencyContact(emergencyContacts);
+    if (!primary) {
+      Alert.alert(
+        'Nenhum telefone cadastrado',
+        'Peça para a família adicionar um contato com telefone na Área da família (aba Emergência).',
+      );
+      return;
+    }
+
+    setSosBusy(true);
+    try {
+      const { locationOk } = await triggerDoubleTapEmergency(primary);
+      if (!locationOk) {
+        Alert.alert(
+          'Localização indisponível',
+          `Ligação para ${primary.name} iniciada e SMS aberto. Se aparecer a tela de mensagens, toque em Enviar. A localização não entrou no texto — peça ajuda por voz.`,
+        );
+      }
+    } catch (error) {
+      console.error('Falha ao acionar emergencia por duplo toque:', error);
+      Alert.alert(
+        'Não foi possível acionar',
+        'Tente de novo ou use 1 toque no botão vermelho para escolher um contato.',
+      );
+    } finally {
+      setSosBusy(false);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <SosBar onPress={() => setShowSOS(true)} />
+        <SosBar
+          busy={sosBusy}
+          onSinglePress={() => setShowSOS(true)}
+          onDoublePress={() => {
+            handleSosDoublePress().catch((error: unknown) => {
+              console.error('Emergencia duplo toque:', error);
+            });
+          }}
+        />
         {!openCategory ? (
           <>
             <Text style={styles.sectionLabel}>O que você quer dizer?</Text>
@@ -160,17 +202,9 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                       ]}
                       onPress={() => handleChooseItem(item)}
                     >
-                      {item.photoUrl ? (
-                        <Image
-                          source={{ uri: item.photoUrl }}
-                          style={styles.itemPhoto}
-                          contentFit="cover"
-                        />
-                      ) : (
-                        <Text style={[styles.tileEmoji, { fontSize: 34 * fontScale }]}>
-                          {item.emoji}
-                        </Text>
-                      )}
+                      <Text style={[styles.tileEmoji, { fontSize: 34 * fontScale }]}>
+                        {item.emoji}
+                      </Text>
                       <Text style={[styles.itemLabel, { fontSize: 16 * fontScale }]}>
                         {item.name}
                       </Text>
@@ -196,17 +230,9 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
       {confirmedItem ? (
         <View style={styles.confirmOverlay}>
           <View style={styles.confirmCard}>
-            {confirmedItem.photoUrl ? (
-              <Image
-                source={{ uri: confirmedItem.photoUrl }}
-                style={styles.confirmPhoto}
-                contentFit="cover"
-              />
-            ) : (
-              <Text style={[styles.confirmEmoji, { fontSize: 64 * fontScale }]}>
-                {confirmedItem.emoji}
-              </Text>
-            )}
+            <Text style={[styles.confirmEmoji, { fontSize: 64 * fontScale }]}>
+              {confirmedItem.emoji}
+            </Text>
             <Text style={[styles.confirmLabel, { fontSize: 24 * fontScale }]}>
               {confirmedItem.name}
             </Text>
@@ -290,11 +316,6 @@ const styles = StyleSheet.create({
   tileEmoji: {
     fontSize: 34,
   },
-  itemPhoto: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-  },
   tileLabel: {
     fontFamily: fonts.heading,
     fontSize: 17,
@@ -355,11 +376,6 @@ const styles = StyleSheet.create({
   },
   confirmEmoji: {
     fontSize: 64,
-  },
-  confirmPhoto: {
-    width: 96,
-    height: 96,
-    borderRadius: 20,
   },
   confirmLabel: {
     fontFamily: fonts.headingBold,
