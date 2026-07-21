@@ -21,9 +21,8 @@ import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
 import { confirmVerificationCode, sendVerificationCode, signOut } from './src/services/auth';
 import { addContact, removeContact } from './src/services/emergency';
 import { firebaseConfig } from './src/services/firebase';
-import { addItem, clearItemPhoto, removeItem, setItemPhoto } from './src/services/items';
+import { addItem, removeItem } from './src/services/items';
 import { readCache } from './src/services/localCache';
-import { generateLocalId, uploadItemPhoto } from './src/services/storage';
 import {
   FONT_SCALE_CACHE_KEY,
   type FontScale,
@@ -95,13 +94,10 @@ export default function App() {
     setErrorMessage(null);
   }
 
-  async function handleAddItem(category: string, name: string, emoji: string, photoUri?: string) {
+  async function handleAddItem(category: string, name: string, emoji: string) {
     if (!user) return;
     try {
-      const photoUrl = photoUri
-        ? await uploadItemPhoto(user.uid, generateLocalId(), photoUri)
-        : undefined;
-      await addItem(user.uid, category, name, emoji, photoUrl);
+      await addItem(user.uid, category, name, emoji);
     } catch (error) {
       console.error('Falha ao adicionar item:', error);
     }
@@ -113,25 +109,6 @@ export default function App() {
       await removeItem(user.uid, itemId);
     } catch (error) {
       console.error('Falha ao remover item:', error);
-    }
-  }
-
-  async function handleSetItemPhoto(itemId: string, photoUri: string) {
-    if (!user) return;
-    try {
-      const photoUrl = await uploadItemPhoto(user.uid, itemId, photoUri);
-      await setItemPhoto(user.uid, itemId, photoUrl);
-    } catch (error) {
-      console.error('Falha ao definir foto do item:', error);
-    }
-  }
-
-  async function handleClearItemPhoto(itemId: string) {
-    if (!user) return;
-    try {
-      await clearItemPhoto(user.uid, itemId);
-    } catch (error) {
-      console.error('Falha ao remover foto do item:', error);
     }
   }
 
@@ -176,8 +153,6 @@ export default function App() {
               patientName={user.displayName ?? 'Paciente'}
               onAddItem={handleAddItem}
               onRemoveItem={handleRemoveItem}
-              onSetItemPhoto={handleSetItemPhoto}
-              onClearItemPhoto={handleClearItemPhoto}
               onAddContact={handleAddContact}
               onRemoveContact={handleRemoveContact}
               onClose={() => setShowAdmin(false)}

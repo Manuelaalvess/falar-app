@@ -1,9 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { VoiceRecorderModal } from '../components/VoiceRecorderModal';
 import { CATEGORIES, EMOJI_CHOICES } from '../constants/communication';
@@ -31,10 +30,8 @@ type AdminTab = 'perfil' | 'emergencia' | 'evolucao';
 
 interface AdminScreenProps {
   patientName: string;
-  onAddItem: (category: string, name: string, emoji: string, photoUri?: string) => void;
+  onAddItem: (category: string, name: string, emoji: string) => void;
   onRemoveItem: (itemId: string) => void;
-  onSetItemPhoto: (itemId: string, photoUri: string) => void;
-  onClearItemPhoto: (itemId: string) => void;
   onAddContact: (name: string, relation: string, phone: string, emoji: string) => void;
   onRemoveContact: (contactId: string) => void;
   onClose: () => void;
@@ -45,8 +42,6 @@ export function AdminScreen({
   patientName,
   onAddItem,
   onRemoveItem,
-  onSetItemPhoto,
-  onClearItemPhoto,
   onAddContact,
   onRemoveContact,
   onClose,
@@ -115,8 +110,6 @@ export function AdminScreen({
                 items={itemsByCategory[category.key] ?? []}
                 onAddItem={onAddItem}
                 onRemoveItem={onRemoveItem}
-                onSetItemPhoto={onSetItemPhoto}
-                onClearItemPhoto={onClearItemPhoto}
               />
             ))}
           </>
@@ -218,42 +211,14 @@ function AccessibilityBlock({
   );
 }
 
-async function pickPhoto(): Promise<string | null> {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) {
-    Alert.alert(
-      'Permissão necessária',
-      'Precisamos de acesso às suas fotos para escolher uma imagem para o item.',
-    );
-    return null;
-  }
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 0.8,
-    allowsEditing: true,
-    aspect: [1, 1],
-  });
-  if (result.canceled) return null;
-  return result.assets[0]?.uri ?? null;
-}
-
 interface CategoryBlockProps {
   category: CommunicationCategory;
   items: CommunicationItem[];
-  onAddItem: (category: string, name: string, emoji: string, photoUri?: string) => void;
+  onAddItem: (category: string, name: string, emoji: string) => void;
   onRemoveItem: (itemId: string) => void;
-  onSetItemPhoto: (itemId: string, photoUri: string) => void;
-  onClearItemPhoto: (itemId: string) => void;
 }
 
-function CategoryBlock({
-  category,
-  items,
-  onAddItem,
-  onRemoveItem,
-  onSetItemPhoto,
-  onClearItemPhoto,
-}: CategoryBlockProps) {
+function CategoryBlock({ category, items, onAddItem, onRemoveItem }: CategoryBlockProps) {
   const {
     control,
     handleSubmit,
@@ -263,19 +228,8 @@ function CategoryBlock({
     resolver: zodResolver(itemFormSchema),
     defaultValues: { name: '', emoji: EMOJI_CHOICES[0] },
   });
-  const [pendingPhotoUri, setPendingPhotoUri] = useState<string | null>(null);
   const [activeRecordingItem, setActiveRecordingItem] = useState<CommunicationItem | null>(null);
   const [, bumpRecordingsVersion] = useState(0);
-
-  async function handlePickPhotoForNew() {
-    const uri = await pickPhoto();
-    if (uri) setPendingPhotoUri(uri);
-  }
-
-  async function handlePickPhotoForExisting(itemId: string) {
-    const uri = await pickPhoto();
-    if (uri) onSetItemPhoto(itemId, uri);
-  }
 
   function handleSaveRecording(temporaryUri: string) {
     if (!activeRecordingItem) return;
@@ -290,9 +244,8 @@ function CategoryBlock({
   }
 
   function onSubmit(values: ItemFormValues) {
-    onAddItem(category.key, values.name.trim(), values.emoji, pendingPhotoUri ?? undefined);
+    onAddItem(category.key, values.name.trim(), values.emoji);
     reset({ name: '', emoji: values.emoji });
-    setPendingPhotoUri(null);
   }
 
   return (
@@ -316,17 +269,6 @@ function CategoryBlock({
             <Pressable style={styles.photoButton} onPress={() => setActiveRecordingItem(item)}>
               <Text style={styles.photoButtonLabel}>{getRecordingUri(item.id) ? '🔊' : '🎤'}</Text>
             </Pressable>
-            <Pressable
-              style={styles.photoButton}
-              onPress={() => handlePickPhotoForExisting(item.id)}
-            >
-              <Text style={styles.photoButtonLabel}>{item.photoUrl ? '🔄' : '📷'}</Text>
-            </Pressable>
-            {item.photoUrl ? (
-              <Pressable onPress={() => onClearItemPhoto(item.id)}>
-                <Text style={styles.deleteLabel}>🗑️</Text>
-              </Pressable>
-            ) : null}
             <Pressable onPress={() => onRemoveItem(item.id)}>
               <Text style={styles.deleteLabel}>✕</Text>
             </Pressable>
@@ -369,31 +311,11 @@ function CategoryBlock({
             />
           )}
         />
-        <Pressable style={styles.photoButton} onPress={handlePickPhotoForNew}>
-          <Text style={styles.photoButtonLabel}>📷</Text>
-        </Pressable>
         <Pressable style={styles.addButton} onPress={handleSubmit(onSubmit)}>
           <Text style={styles.addButtonLabel}>Adicionar</Text>
         </Pressable>
       </View>
       {errors.name ? <Text style={styles.errorText}>{errors.name.message}</Text> : null}
-      {pendingPhotoUri ? (
-        <View style={styles.pendingPhotoRow}>
-          <Image
-            source={{ uri: pendingPhotoUri }}
-            style={styles.pendingPhotoThumb}
-            contentFit="cover"
-          />
-          <Text style={styles.pendingPhotoLabel}>Foto pronta para o próximo item</Text>
-          <Pressable onPress={() => setPendingPhotoUri(null)}>
-            <Text style={styles.deleteLabel}>✕</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <Text style={styles.pendingPhotoLabel}>
-          Foto é opcional — sem foto, o item usa o símbolo escolhido.
-        </Text>
-      )}
 
       <VoiceRecorderModal
         visible={activeRecordingItem !== null}
@@ -814,24 +736,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.headingMedium,
     fontSize: fontSizes.bodySmall,
     color: '#fff',
-  },
-  pendingPhotoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 10,
-  },
-  pendingPhotoThumb: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-  },
-  pendingPhotoLabel: {
-    flex: 1,
-    fontFamily: fonts.body,
-    fontSize: 13,
-    color: colors.muted,
-    marginTop: 10,
   },
   signOutButton: {
     alignItems: 'center',
