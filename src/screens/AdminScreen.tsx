@@ -1,11 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Image } from 'expo-image';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { AdminGateModal } from '../components/AdminGateModal';
 import { VoiceRecorderModal } from '../components/VoiceRecorderModal';
 import { CATEGORIES, EMOJI_CHOICES } from '../constants/communication';
+import {
+  getBiometricPreference,
+  isBiometricAvailable,
+  setBiometricPreference,
+} from '../services/adminSecurity';
 import { deleteRecording, getRecordingUri, saveRecording } from '../services/audioRecordings';
 import { type FontScale, useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
@@ -29,6 +34,7 @@ import {
 type AdminTab = 'perfil' | 'emergencia' | 'evolucao';
 
 interface AdminScreenProps {
+  uid: string;
   patientName: string;
   onAddItem: (category: string, name: string, emoji: string) => void;
   onRemoveItem: (itemId: string) => void;
@@ -39,6 +45,7 @@ interface AdminScreenProps {
 }
 
 export function AdminScreen({
+  uid,
   patientName,
   onAddItem,
   onRemoveItem,
@@ -95,6 +102,8 @@ export function AdminScreen({
       <ScrollView contentContainerStyle={styles.body}>
         {tab === 'perfil' ? (
           <>
+            <Text style={styles.sectionLabel}>Segurança</Text>
+            <SecurityBlock uid={uid} />
             <Text style={styles.sectionLabel}>Acessibilidade</Text>
             <AccessibilityBlock
               fontScale={fontScale}
@@ -126,6 +135,80 @@ export function AdminScreen({
           <Text style={styles.signOutLabel}>Sair da conta</Text>
         </Pressable>
       </ScrollView>
+    </View>
+  );
+}
+
+interface SecurityBlockProps {
+  uid: string;
+}
+
+function SecurityBlock({ uid }: SecurityBlockProps) {
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [showChangePin, setShowChangePin] = useState(false);
+
+  useEffect(() => {
+    isBiometricAvailable().then(setBiometricAvailable);
+    getBiometricPreference(uid).then(setBiometricEnabled);
+  }, [uid]);
+
+  function handleToggleBiometric(enabled: boolean) {
+    setBiometricEnabled(enabled);
+    setBiometricPreference(uid, enabled);
+  }
+
+  return (
+    <View style={styles.block}>
+      <Text style={styles.blockTitle}>PIN de acesso</Text>
+      <Text style={styles.switchScanningDescription}>
+        Protege a Área da família para o paciente não entrar por engano.
+      </Text>
+      <Pressable style={styles.addContactButton} onPress={() => setShowChangePin(true)}>
+        <Text style={styles.addButtonLabel}>Alterar PIN</Text>
+      </Pressable>
+
+      {biometricAvailable ? (
+        <>
+          <Text style={styles.switchScanningTitle}>Usar biometria</Text>
+          <View style={styles.fontScaleRow}>
+            <Pressable
+              style={[styles.fontScaleButton, !biometricEnabled && styles.fontScaleButtonActive]}
+              onPress={() => handleToggleBiometric(false)}
+            >
+              <Text
+                style={[
+                  styles.fontScaleButtonLabel,
+                  !biometricEnabled && styles.fontScaleButtonLabelActive,
+                ]}
+              >
+                Desligada
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.fontScaleButton, biometricEnabled && styles.fontScaleButtonActive]}
+              onPress={() => handleToggleBiometric(true)}
+            >
+              <Text
+                style={[
+                  styles.fontScaleButtonLabel,
+                  biometricEnabled && styles.fontScaleButtonLabelActive,
+                ]}
+              >
+                Ligada
+              </Text>
+            </Pressable>
+          </View>
+        </>
+      ) : null}
+
+      <AdminGateModal
+        visible={showChangePin}
+        uid={uid}
+        mode="change"
+        onSuccess={() => setShowChangePin(false)}
+        onCancel={() => setShowChangePin(false)}
+      />
     </View>
   );
 }
@@ -256,15 +339,7 @@ function CategoryBlock({ category, items, onAddItem, onRemoveItem }: CategoryBlo
       {items.length > 0 ? (
         items.map((item) => (
           <View key={item.id} style={styles.itemRow}>
-            {item.photoUrl ? (
-              <Image
-                source={{ uri: item.photoUrl }}
-                style={styles.itemPhotoThumb}
-                contentFit="cover"
-              />
-            ) : (
-              <Text style={styles.itemEmoji}>{item.emoji}</Text>
-            )}
+            <Text style={styles.itemEmoji}>{item.emoji}</Text>
             <Text style={styles.itemName}>{item.name}</Text>
             <Pressable style={styles.photoButton} onPress={() => setActiveRecordingItem(item)}>
               <Text style={styles.photoButtonLabel}>{getRecordingUri(item.id) ? '🔊' : '🎤'}</Text>
@@ -361,6 +436,10 @@ function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: EmergenciaTa
   return (
     <View>
       <Text style={styles.sectionLabel}>Contatos que aparecem no botão 🆘</Text>
+      <Text style={styles.hintText}>
+        Com 2 toques rápidos no botão vermelho, o app liga e abre SMS com localização para o
+        primeiro contato da lista abaixo que tiver telefone.
+      </Text>
       <View style={styles.block}>
         {contacts.length > 0 ? (
           contacts.map((contact) => (
@@ -597,6 +676,14 @@ const styles = StyleSheet.create({
     color: colors.muted,
     marginBottom: 14,
   },
+  hintText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.bodySmall,
+    color: colors.muted,
+    lineHeight: 20,
+    marginBottom: 12,
+    marginTop: -6,
+  },
   block: {
     backgroundColor: colors.card,
     borderWidth: 1,
@@ -621,11 +708,6 @@ const styles = StyleSheet.create({
   },
   itemEmoji: {
     fontSize: 22,
-  },
-  itemPhotoThumb: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
   },
   itemName: {
     flex: 1,

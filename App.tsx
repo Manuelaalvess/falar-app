@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
+import { AdminGateModal } from './src/components/AdminGateModal';
 import { AppHeader } from './src/components/AppHeader';
 import {
   type RecaptchaVerifierHandle,
@@ -57,6 +58,7 @@ export default function App() {
   const [pendingPhone, setPendingPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showAdminGate, setShowAdminGate] = useState(false);
 
   async function handleLoginSubmit({ name, phone }: LoginFormData) {
     if (!recaptchaVerifier.current) return;
@@ -150,6 +152,7 @@ export default function App() {
         {user ? (
           showAdmin ? (
             <AdminScreen
+              uid={user.uid}
               patientName={user.displayName ?? 'Paciente'}
               onAddItem={handleAddItem}
               onRemoveItem={handleRemoveItem}
@@ -160,8 +163,17 @@ export default function App() {
             />
           ) : (
             <>
-              <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdmin(true)} />
+              <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdminGate(true)} />
               <ComunicarScreen uid={user.uid} />
+              <AdminGateModal
+                visible={showAdminGate}
+                uid={user.uid}
+                onSuccess={() => {
+                  setShowAdminGate(false);
+                  setShowAdmin(true);
+                }}
+                onCancel={() => setShowAdminGate(false)}
+              />
             </>
           )
         ) : confirmation ? (
