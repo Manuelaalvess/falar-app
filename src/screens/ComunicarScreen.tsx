@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { EmergencySheet } from '../components/EmergencySheet';
@@ -11,6 +11,7 @@ import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationItem } from '../types/communication';
+import { sortItemsByUsage } from '../utils/personalization';
 
 interface ComunicarScreenProps {
   uid: string;
@@ -19,6 +20,7 @@ interface ComunicarScreenProps {
 export function ComunicarScreen({ uid }: ComunicarScreenProps) {
   const itemsByCategory = useAppStore((state) => state.itemsByCategory);
   const emergencyContacts = useAppStore((state) => state.emergencyContacts);
+  const events = useAppStore((state) => state.events);
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
   const [confirmedItem, setConfirmedItem] = useState<CommunicationItem | null>(null);
   const [showSOS, setShowSOS] = useState(false);
@@ -40,7 +42,12 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
       });
     }
   }
-  const items = openCategoryKey ? (itemsByCategory[openCategoryKey] ?? []) : [];
+
+  const items = useMemo(() => {
+    if (!openCategoryKey) return [];
+    const raw = itemsByCategory[openCategoryKey] ?? [];
+    return sortItemsByUsage(raw, events, openCategoryKey);
+  }, [itemsByCategory, openCategoryKey, events]);
 
   return (
     <View style={styles.container}>
