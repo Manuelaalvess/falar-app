@@ -5,13 +5,18 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { EmergencySheet } from '../components/EmergencySheet';
 import { SosBar } from '../components/SosBar';
 import { CATEGORIES, CATEGORY_COLORS } from '../constants/communication';
+import { logEvent } from '../services/evolution';
 import { speak } from '../services/speech';
 import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationItem } from '../types/communication';
 
-export function ComunicarScreen() {
+interface ComunicarScreenProps {
+  uid: string;
+}
+
+export function ComunicarScreen({ uid }: ComunicarScreenProps) {
   const itemsByCategory = useAppStore((state) => state.itemsByCategory);
   const emergencyContacts = useAppStore((state) => state.emergencyContacts);
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
@@ -24,12 +29,17 @@ export function ComunicarScreen() {
     return () => clearTimeout(timeout);
   }, [confirmedItem]);
 
+  const openCategory = CATEGORIES.find((category) => category.key === openCategoryKey);
+
   function handleChooseItem(item: CommunicationItem) {
     speak(item.name);
     setConfirmedItem(item);
+    if (openCategory) {
+      logEvent(uid, openCategory.key, openCategory.label, item.name).catch((error: unknown) => {
+        console.error('Falha ao registrar evento de comunicacao:', error);
+      });
+    }
   }
-
-  const openCategory = CATEGORIES.find((category) => category.key === openCategoryKey);
   const items = openCategoryKey ? (itemsByCategory[openCategoryKey] ?? []) : [];
 
   return (

@@ -12,6 +12,7 @@ import {
 import { useAppFonts } from './src/hooks/useAppFonts';
 import { useAuth } from './src/hooks/useAuth';
 import { useEmergencyContacts } from './src/hooks/useEmergencyContacts';
+import { useEvolutionEvents } from './src/hooks/useEvolutionEvents';
 import { useItems } from './src/hooks/useItems';
 import { AdminScreen } from './src/screens/AdminScreen';
 import { ComunicarScreen } from './src/screens/ComunicarScreen';
@@ -30,6 +31,7 @@ export default function App() {
   const { user, initializing } = useAuth();
   useItems(user?.uid ?? null);
   useEmergencyContacts(user?.uid ?? null);
+  useEvolutionEvents(user?.uid ?? null);
   const showAdmin = useAppStore((state) => state.showAdmin);
   const setShowAdmin = useAppStore((state) => state.setShowAdmin);
   const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
@@ -166,7 +168,7 @@ export default function App() {
           ) : (
             <>
               <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdmin(true)} />
-              <ComunicarScreen />
+              <ComunicarScreen uid={user.uid} />
             </>
           )
         ) : confirmation ? (
