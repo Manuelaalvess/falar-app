@@ -1,6 +1,8 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { CATEGORIES, EMOJI_CHOICES } from '../constants/communication';
@@ -9,6 +11,12 @@ import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationCategory, CommunicationItem } from '../types/communication';
 import type { EmergencyContact } from '../types/emergency';
+import {
+  type ContactFormValues,
+  contactFormSchema,
+  type ItemFormValues,
+  itemFormSchema,
+} from '../validation/adminForms';
 
 type AdminTab = 'perfil' | 'emergencia';
 
@@ -132,8 +140,15 @@ function CategoryBlock({
   onSetItemPhoto,
   onClearItemPhoto,
 }: CategoryBlockProps) {
-  const [name, setName] = useState('');
-  const [emoji, setEmoji] = useState(EMOJI_CHOICES[0]);
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ItemFormValues>({
+    resolver: zodResolver(itemFormSchema),
+    defaultValues: { name: '', emoji: EMOJI_CHOICES[0] },
+  });
   const [pendingPhotoUri, setPendingPhotoUri] = useState<string | null>(null);
 
   async function handlePickPhotoForNew() {
@@ -146,11 +161,9 @@ function CategoryBlock({
     if (uri) onSetItemPhoto(itemId, uri);
   }
 
-  function handleAdd() {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    onAddItem(category.key, trimmed, emoji, pendingPhotoUri ?? undefined);
-    setName('');
+  function onSubmit(values: ItemFormValues) {
+    onAddItem(category.key, values.name.trim(), values.emoji, pendingPhotoUri ?? undefined);
+    reset({ name: '', emoji: values.emoji });
     setPendingPhotoUri(null);
   }
 
@@ -192,33 +205,47 @@ function CategoryBlock({
         <Text style={styles.emptyLabel}>Nenhum item ainda.</Text>
       )}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.emojiRow}>
-        {EMOJI_CHOICES.map((choice) => (
-          <Pressable
-            key={choice}
-            style={[styles.emojiChoice, choice === emoji && styles.emojiChoiceSelected]}
-            onPress={() => setEmoji(choice)}
-          >
-            <Text style={styles.emojiChoiceLabel}>{choice}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+      <Controller
+        control={control}
+        name="emoji"
+        render={({ field: { value, onChange } }) => (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.emojiRow}>
+            {EMOJI_CHOICES.map((choice) => (
+              <Pressable
+                key={choice}
+                style={[styles.emojiChoice, choice === value && styles.emojiChoiceSelected]}
+                onPress={() => onChange(choice)}
+              >
+                <Text style={styles.emojiChoiceLabel}>{choice}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+      />
 
       <View style={styles.addRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Nome (ex: Maria, Praia...)"
-          placeholderTextColor={colors.muted}
-          value={name}
-          onChangeText={setName}
+        <Controller
+          control={control}
+          name="name"
+          render={({ field: { value, onChange, onBlur } }) => (
+            <TextInput
+              style={styles.input}
+              placeholder="Nome (ex: Maria, Praia...)"
+              placeholderTextColor={colors.muted}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+            />
+          )}
         />
         <Pressable style={styles.photoButton} onPress={handlePickPhotoForNew}>
           <Text style={styles.photoButtonLabel}>📷</Text>
         </Pressable>
-        <Pressable style={styles.addButton} onPress={handleAdd}>
+        <Pressable style={styles.addButton} onPress={handleSubmit(onSubmit)}>
           <Text style={styles.addButtonLabel}>Adicionar</Text>
         </Pressable>
       </View>
+      {errors.name ? <Text style={styles.errorText}>{errors.name.message}</Text> : null}
       {pendingPhotoUri ? (
         <View style={styles.pendingPhotoRow}>
           <Image
@@ -247,19 +274,24 @@ interface EmergenciaTabProps {
 }
 
 function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: EmergenciaTabProps) {
-  const [name, setName] = useState('');
-  const [relation, setRelation] = useState('');
-  const [phone, setPhone] = useState('');
-  const [emoji, setEmoji] = useState(EMOJI_CHOICES[0]);
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ContactFormValues>({
+    resolver: zodResolver(contactFormSchema),
+    defaultValues: { name: '', relation: '', phone: '', emoji: EMOJI_CHOICES[0] },
+  });
 
-  function handleAdd() {
-    const trimmedName = name.trim();
-    const trimmedPhone = phone.trim();
-    if (!trimmedName || !trimmedPhone) return;
-    onAddContact(trimmedName, relation.trim() || 'Família', trimmedPhone, emoji);
-    setName('');
-    setRelation('');
-    setPhone('');
+  function onSubmit(values: ContactFormValues) {
+    onAddContact(
+      values.name.trim(),
+      values.relation.trim() || 'Família',
+      values.phone.trim(),
+      values.emoji,
+    );
+    reset({ name: '', relation: '', phone: '', emoji: values.emoji });
   }
 
   return (
@@ -287,43 +319,72 @@ function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: EmergenciaTa
           <Text style={styles.emptyLabel}>Nenhum contato ainda.</Text>
         )}
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.emojiRow}>
-          {EMOJI_CHOICES.map((choice) => (
-            <Pressable
-              key={choice}
-              style={[styles.emojiChoice, choice === emoji && styles.emojiChoiceSelected]}
-              onPress={() => setEmoji(choice)}
-            >
-              <Text style={styles.emojiChoiceLabel}>{choice}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+        <Controller
+          control={control}
+          name="emoji"
+          render={({ field: { value, onChange } }) => (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.emojiRow}>
+              {EMOJI_CHOICES.map((choice) => (
+                <Pressable
+                  key={choice}
+                  style={[styles.emojiChoice, choice === value && styles.emojiChoiceSelected]}
+                  onPress={() => onChange(choice)}
+                >
+                  <Text style={styles.emojiChoiceLabel}>{choice}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+        />
 
         <View style={styles.contactFormRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Nome (ex: Ana)"
-            placeholderTextColor={colors.muted}
-            value={name}
-            onChangeText={setName}
+          <Controller
+            control={control}
+            name="name"
+            render={({ field: { value, onChange, onBlur } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Nome (ex: Ana)"
+                placeholderTextColor={colors.muted}
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+              />
+            )}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Relação (ex: Filha)"
-            placeholderTextColor={colors.muted}
-            value={relation}
-            onChangeText={setRelation}
+          <Controller
+            control={control}
+            name="relation"
+            render={({ field: { value, onChange, onBlur } }) => (
+              <TextInput
+                style={styles.input}
+                placeholder="Relação (ex: Filha)"
+                placeholderTextColor={colors.muted}
+                value={value}
+                onChangeText={onChange}
+                onBlur={onBlur}
+              />
+            )}
           />
         </View>
-        <TextInput
-          style={[styles.input, styles.contactPhoneInput]}
-          placeholder="Telefone"
-          placeholderTextColor={colors.muted}
-          value={phone}
-          onChangeText={setPhone}
-          keyboardType="phone-pad"
+        {errors.name ? <Text style={styles.errorText}>{errors.name.message}</Text> : null}
+        <Controller
+          control={control}
+          name="phone"
+          render={({ field: { value, onChange, onBlur } }) => (
+            <TextInput
+              style={[styles.input, styles.contactPhoneInput]}
+              placeholder="Telefone"
+              placeholderTextColor={colors.muted}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+              keyboardType="phone-pad"
+            />
+          )}
         />
-        <Pressable style={styles.addContactButton} onPress={handleAdd}>
+        {errors.phone ? <Text style={styles.errorText}>{errors.phone.message}</Text> : null}
+        <Pressable style={styles.addContactButton} onPress={handleSubmit(onSubmit)}>
           <Text style={styles.addButtonLabel}>Adicionar contato</Text>
         </Pressable>
       </View>
@@ -461,6 +522,12 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.bodySmall,
     color: colors.muted,
     paddingVertical: 6,
+  },
+  errorText: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.danger,
+    marginTop: 6,
   },
   contactInfo: {
     flex: 1,
