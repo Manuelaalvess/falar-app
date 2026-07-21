@@ -156,6 +156,7 @@ export default function App() {
         {user ? (
           showAdmin ? (
             <AdminScreen
+              patientName={user.displayName ?? 'Paciente'}
               onAddItem={handleAddItem}
               onRemoveItem={handleRemoveItem}
               onSetItemPhoto={handleSetItemPhoto}

@@ -11,6 +11,13 @@ import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationCategory, CommunicationItem } from '../types/communication';
 import type { EmergencyContact } from '../types/emergency';
+import type { CommunicationEvent } from '../types/evolution';
+import {
+  buildTherapistReport,
+  getLast7DaysCounts,
+  getRecentEvents,
+  getTopCategory,
+} from '../utils/evolutionStats';
 import {
   type ContactFormValues,
   contactFormSchema,
@@ -18,9 +25,10 @@ import {
   itemFormSchema,
 } from '../validation/adminForms';
 
-type AdminTab = 'perfil' | 'emergencia';
+type AdminTab = 'perfil' | 'emergencia' | 'evolucao';
 
 interface AdminScreenProps {
+  patientName: string;
   onAddItem: (category: string, name: string, emoji: string, photoUri?: string) => void;
   onRemoveItem: (itemId: string) => void;
   onSetItemPhoto: (itemId: string, photoUri: string) => void;
@@ -32,6 +40,7 @@ interface AdminScreenProps {
 }
 
 export function AdminScreen({
+  patientName,
   onAddItem,
   onRemoveItem,
   onSetItemPhoto,
@@ -43,6 +52,7 @@ export function AdminScreen({
 }: AdminScreenProps) {
   const itemsByCategory = useAppStore((state) => state.itemsByCategory);
   const emergencyContacts = useAppStore((state) => state.emergencyContacts);
+  const events = useAppStore((state) => state.events);
   const [tab, setTab] = useState<AdminTab>('perfil');
 
   return (
@@ -72,6 +82,14 @@ export function AdminScreen({
             Emergência
           </Text>
         </Pressable>
+        <Pressable
+          style={[styles.tabButton, tab === 'evolucao' && styles.tabButtonActive]}
+          onPress={() => setTab('evolucao')}
+        >
+          <Text style={[styles.tabButtonLabel, tab === 'evolucao' && styles.tabButtonLabelActive]}>
+            Evolução
+          </Text>
+        </Pressable>
       </View>
       <ScrollView contentContainerStyle={styles.body}>
         {tab === 'perfil' ? (
@@ -89,12 +107,14 @@ export function AdminScreen({
               />
             ))}
           </>
-        ) : (
+        ) : tab === 'emergencia' ? (
           <EmergenciaTab
             contacts={emergencyContacts}
             onAddContact={onAddContact}
             onRemoveContact={onRemoveContact}
           />
+        ) : (
+          <EvolucaoTab patientName={patientName} events={events} />
         )}
         <Pressable style={styles.signOutButton} onPress={onSignOut}>
           <Text style={styles.signOutLabel}>Sair da conta</Text>
@@ -392,6 +412,75 @@ function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: EmergenciaTa
   );
 }
 
+interface EvolucaoTabProps {
+  patientName: string;
+  events: CommunicationEvent[];
+}
+
+function EvolucaoTab({ patientName, events }: EvolucaoTabProps) {
+  const total = events.length;
+  const topCategory = getTopCategory(events);
+  const last7Days = getLast7DaysCounts(events);
+  const maxCount = Math.max(1, ...last7Days.map((day) => day.count));
+  const recent = getRecentEvents(events, 8);
+  const report = buildTherapistReport(patientName, events);
+
+  return (
+    <View>
+      <Text style={styles.sectionLabel}>Resumo</Text>
+      <View style={styles.statRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statNum}>{total}</Text>
+          <Text style={styles.statLabel}>comunicações no total</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statNum}>{topCategory.count}</Text>
+          <Text style={styles.statLabel}>{topCategory.label}</Text>
+        </View>
+      </View>
+
+      <Text style={styles.sectionLabel}>Últimos 7 dias</Text>
+      <View style={styles.block}>
+        {last7Days.map((day, index) => (
+          <View key={index} style={styles.barRow}>
+            <Text style={styles.barDay}>{day.label}</Text>
+            <View style={styles.barTrack}>
+              <View style={[styles.barFill, { width: `${(day.count / maxCount) * 100}%` }]} />
+            </View>
+            <Text style={styles.barCount}>{day.count}</Text>
+          </View>
+        ))}
+      </View>
+
+      <Text style={styles.sectionLabel}>Levar para a fono</Text>
+      <View style={styles.block}>
+        <Text style={styles.reportText} selectable>
+          {report}
+        </Text>
+        <View style={styles.recentList}>
+          {recent.length > 0 ? (
+            recent.map((event) => (
+              <View key={event.id} style={styles.recentItem}>
+                <Text style={styles.recentItemLabel}>{event.itemName}</Text>
+                <Text style={styles.recentItemDate}>
+                  {new Date(event.timestamp).toLocaleString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyLabel}>Nenhuma comunicação registrada ainda.</Text>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -632,5 +721,91 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.body,
     color: colors.danger,
     textDecorationLine: 'underline',
+  },
+  statRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 18,
+    padding: 16,
+    alignItems: 'center',
+  },
+  statNum: {
+    fontFamily: fonts.headingBold,
+    fontSize: 28,
+    color: colors.primaryDark,
+  },
+  statLabel: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.muted,
+    marginTop: 2,
+    textAlign: 'center',
+  },
+  barRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  barDay: {
+    width: 34,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.muted,
+  },
+  barTrack: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderRadius: 8,
+    height: 16,
+    overflow: 'hidden',
+  },
+  barFill: {
+    backgroundColor: colors.primary,
+    height: '100%',
+    borderRadius: 8,
+  },
+  barCount: {
+    width: 20,
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.muted,
+    textAlign: 'right',
+  },
+  reportText: {
+    fontFamily: fonts.body,
+    fontSize: 14,
+    color: colors.ink,
+    lineHeight: 21,
+    backgroundColor: colors.background,
+    borderRadius: 12,
+    padding: 12,
+  },
+  recentList: {
+    marginTop: 14,
+  },
+  recentItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  recentItemLabel: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.bodySmall,
+    color: colors.ink,
+  },
+  recentItemDate: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.bodySmall,
+    color: colors.muted,
   },
 });
