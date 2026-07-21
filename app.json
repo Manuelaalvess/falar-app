@@ -26,13 +26,6 @@
       "expo-font",
       "expo-splash-screen",
       [
-        "expo-image-picker",
-        {
-          "photosPermission": "O app usa fotos da galeria para ilustrar os itens de comunicação, quando a família adicionar uma imagem.",
-          "cameraPermission": "O app usa a câmera para fotografar itens de comunicação, quando a família quiser."
-        }
-      ],
-      [
         "expo-location",
         {
           "locationWhenInUsePermission": "O app usa sua localização para enviar por SMS aos contatos de emergência quando você tocar em pedir ajuda."
@@ -42,6 +35,13 @@
         "expo-av",
         {
           "microphonePermission": "O app usa o microfone para a família gravar a própria voz dizendo as palavras dos itens de comunicação."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "O app usa reconhecimento facial para proteger o acesso à Área da família."
         }
       ]
     ]
