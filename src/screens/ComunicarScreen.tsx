@@ -11,7 +11,7 @@ import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationItem } from '../types/communication';
-import { sortItemsByUsage } from '../utils/personalization';
+import { getSuggestedCategory, sortItemsByUsage } from '../utils/personalization';
 
 interface ComunicarScreenProps {
   uid: string;
@@ -49,6 +49,8 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
     return sortItemsByUsage(raw, events, openCategoryKey);
   }, [itemsByCategory, openCategoryKey, events]);
 
+  const suggestedCategory = useMemo(() => getSuggestedCategory(events), [events]);
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -59,12 +61,18 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
             <View style={styles.grid}>
               {CATEGORIES.map((category) => {
                 const categoryColors = CATEGORY_COLORS[category.key];
+                const isSuggested = category.key === suggestedCategory;
                 return (
                   <Pressable
                     key={category.key}
                     style={[styles.categoryTile, { backgroundColor: categoryColors.background }]}
                     onPress={() => setOpenCategoryKey(category.key)}
                   >
+                    {isSuggested ? (
+                      <View style={styles.suggestedBadge}>
+                        <Text style={styles.suggestedBadgeLabel}>⭐ Sugestão</Text>
+                      </View>
+                    ) : null}
                     <Text style={styles.tileEmoji}>{category.emoji}</Text>
                     <Text style={[styles.tileLabel, { color: categoryColors.foreground }]}>
                       {category.label}
@@ -176,6 +184,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+    position: 'relative',
+  },
+  suggestedBadge: {
+    position: 'absolute',
+    top: 10,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  suggestedBadgeLabel: {
+    fontFamily: fonts.headingMedium,
+    fontSize: 11,
+    color: colors.ink,
   },
   itemTile: {
     width: '47%',
