@@ -13,6 +13,8 @@ import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationItem } from '../types/communication';
 import { getSuggestedCategory, sortItemsByUsage } from '../utils/personalization';
 
+const SCAN_INTERVAL_MS = 2200;
+
 interface ComunicarScreenProps {
   uid: string;
 }
@@ -22,9 +24,11 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
   const emergencyContacts = useAppStore((state) => state.emergencyContacts);
   const events = useAppStore((state) => state.events);
   const fontScale = useAppStore((state) => state.fontScale);
+  const switchScanningEnabled = useAppStore((state) => state.switchScanningEnabled);
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
   const [confirmedItem, setConfirmedItem] = useState<CommunicationItem | null>(null);
   const [showSOS, setShowSOS] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
 
   useEffect(() => {
     if (!confirmedItem) return;
@@ -52,6 +56,30 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
 
   const suggestedCategory = useMemo(() => getSuggestedCategory(events), [events]);
 
+  const scanList = openCategory ? items : CATEGORIES;
+
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [openCategoryKey]);
+
+  useEffect(() => {
+    if (!switchScanningEnabled || confirmedItem || showSOS || scanList.length === 0) return;
+    const interval = setInterval(() => {
+      setHighlightedIndex((previous) => (previous + 1) % scanList.length);
+    }, SCAN_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [switchScanningEnabled, confirmedItem, showSOS, scanList.length]);
+
+  function handleScanSelect() {
+    const highlighted = scanList[highlightedIndex];
+    if (!highlighted) return;
+    if (openCategory) {
+      handleChooseItem(highlighted as CommunicationItem);
+    } else {
+      setOpenCategoryKey((highlighted as (typeof CATEGORIES)[number]).key);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -60,15 +88,17 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
           <>
             <Text style={styles.sectionLabel}>O que você quer dizer?</Text>
             <View style={styles.grid}>
-              {CATEGORIES.map((category) => {
+              {CATEGORIES.map((category, index) => {
                 const categoryColors = CATEGORY_COLORS[category.key];
                 const isSuggested = category.key === suggestedCategory;
+                const isHighlighted = switchScanningEnabled && index === highlightedIndex;
                 return (
                   <Pressable
                     key={category.key}
                     style={[
                       styles.categoryTile,
                       { backgroundColor: categoryColors.background, minHeight: 120 * fontScale },
+                      isHighlighted && styles.scanHighlight,
                     ]}
                     onPress={() => setOpenCategoryKey(category.key)}
                   >
@@ -108,28 +138,35 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
             </View>
             {items.length > 0 ? (
               <View style={styles.grid}>
-                {items.map((item) => (
-                  <Pressable
-                    key={item.id}
-                    style={[styles.itemTile, { minHeight: 110 * fontScale }]}
-                    onPress={() => handleChooseItem(item)}
-                  >
-                    {item.photoUrl ? (
-                      <Image
-                        source={{ uri: item.photoUrl }}
-                        style={styles.itemPhoto}
-                        contentFit="cover"
-                      />
-                    ) : (
-                      <Text style={[styles.tileEmoji, { fontSize: 34 * fontScale }]}>
-                        {item.emoji}
+                {items.map((item, index) => {
+                  const isHighlighted = switchScanningEnabled && index === highlightedIndex;
+                  return (
+                    <Pressable
+                      key={item.id}
+                      style={[
+                        styles.itemTile,
+                        { minHeight: 110 * fontScale },
+                        isHighlighted && styles.scanHighlight,
+                      ]}
+                      onPress={() => handleChooseItem(item)}
+                    >
+                      {item.photoUrl ? (
+                        <Image
+                          source={{ uri: item.photoUrl }}
+                          style={styles.itemPhoto}
+                          contentFit="cover"
+                        />
+                      ) : (
+                        <Text style={[styles.tileEmoji, { fontSize: 34 * fontScale }]}>
+                          {item.emoji}
+                        </Text>
+                      )}
+                      <Text style={[styles.itemLabel, { fontSize: 16 * fontScale }]}>
+                        {item.name}
                       </Text>
-                    )}
-                    <Text style={[styles.itemLabel, { fontSize: 16 * fontScale }]}>
-                      {item.name}
-                    </Text>
-                  </Pressable>
-                ))}
+                    </Pressable>
+                  );
+                })}
               </View>
             ) : (
               <Text style={styles.emptyText}>
@@ -139,6 +176,12 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
           </>
         )}
       </ScrollView>
+
+      {switchScanningEnabled ? (
+        <Pressable style={styles.scanSelectButton} onPress={handleScanSelect}>
+          <Text style={styles.scanSelectButtonLabel}>✅ Selecionar</Text>
+        </Pressable>
+      ) : null}
 
       {confirmedItem ? (
         <View style={styles.confirmOverlay}>
@@ -312,5 +355,22 @@ const styles = StyleSheet.create({
     fontFamily: fonts.headingBold,
     fontSize: 24,
     color: colors.primaryDark,
+  },
+  scanHighlight: {
+    borderWidth: 4,
+    borderColor: colors.accent,
+  },
+  scanSelectButton: {
+    backgroundColor: colors.accent,
+    marginHorizontal: 18,
+    marginBottom: 14,
+    borderRadius: 18,
+    paddingVertical: 18,
+    alignItems: 'center',
+  },
+  scanSelectButtonLabel: {
+    fontFamily: fonts.headingBold,
+    fontSize: 20,
+    color: '#fff',
   },
 });

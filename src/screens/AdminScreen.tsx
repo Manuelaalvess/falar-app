@@ -55,6 +55,8 @@ export function AdminScreen({
   const events = useAppStore((state) => state.events);
   const fontScale = useAppStore((state) => state.fontScale);
   const setFontScale = useAppStore((state) => state.setFontScale);
+  const switchScanningEnabled = useAppStore((state) => state.switchScanningEnabled);
+  const setSwitchScanningEnabled = useAppStore((state) => state.setSwitchScanningEnabled);
   const [tab, setTab] = useState<AdminTab>('perfil');
 
   return (
@@ -97,7 +99,12 @@ export function AdminScreen({
         {tab === 'perfil' ? (
           <>
             <Text style={styles.sectionLabel}>Acessibilidade</Text>
-            <AccessibilityBlock fontScale={fontScale} onChangeFontScale={setFontScale} />
+            <AccessibilityBlock
+              fontScale={fontScale}
+              onChangeFontScale={setFontScale}
+              switchScanningEnabled={switchScanningEnabled}
+              onChangeSwitchScanning={setSwitchScanningEnabled}
+            />
             <Text style={styles.sectionLabel}>Personalize as categorias que o paciente usa</Text>
             {CATEGORIES.map((category) => (
               <CategoryBlock
@@ -137,9 +144,16 @@ const FONT_SCALE_OPTIONS: { value: FontScale; label: string }[] = [
 interface AccessibilityBlockProps {
   fontScale: FontScale;
   onChangeFontScale: (scale: FontScale) => void;
+  switchScanningEnabled: boolean;
+  onChangeSwitchScanning: (enabled: boolean) => void;
 }
 
-function AccessibilityBlock({ fontScale, onChangeFontScale }: AccessibilityBlockProps) {
+function AccessibilityBlock({
+  fontScale,
+  onChangeFontScale,
+  switchScanningEnabled,
+  onChangeSwitchScanning,
+}: AccessibilityBlockProps) {
   return (
     <View style={styles.block}>
       <Text style={styles.blockTitle}>Tamanho da letra e dos botões</Text>
@@ -163,6 +177,40 @@ function AccessibilityBlock({ fontScale, onChangeFontScale }: AccessibilityBlock
             </Text>
           </Pressable>
         ))}
+      </View>
+
+      <Text style={styles.switchScanningTitle}>Varredura por botão único</Text>
+      <Text style={styles.switchScanningDescription}>
+        O app destaca cada categoria/item em sequência automaticamente. Toque no botão grande
+        &ldquo;Selecionar&rdquo; na hora certa em vez de tocar diretamente no item.
+      </Text>
+      <View style={styles.fontScaleRow}>
+        <Pressable
+          style={[styles.fontScaleButton, !switchScanningEnabled && styles.fontScaleButtonActive]}
+          onPress={() => onChangeSwitchScanning(false)}
+        >
+          <Text
+            style={[
+              styles.fontScaleButtonLabel,
+              !switchScanningEnabled && styles.fontScaleButtonLabelActive,
+            ]}
+          >
+            Desligada
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.fontScaleButton, switchScanningEnabled && styles.fontScaleButtonActive]}
+          onPress={() => onChangeSwitchScanning(true)}
+        >
+          <Text
+            style={[
+              styles.fontScaleButtonLabel,
+              switchScanningEnabled && styles.fontScaleButtonLabelActive,
+            ]}
+          >
+            Ligada
+          </Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -875,5 +923,19 @@ const styles = StyleSheet.create({
   },
   fontScaleButtonLabelActive: {
     color: '#fff',
+  },
+  switchScanningTitle: {
+    fontFamily: fonts.headingMedium,
+    fontSize: 15,
+    color: colors.ink,
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  switchScanningDescription: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.muted,
+    lineHeight: 19,
+    marginBottom: 10,
   },
 });

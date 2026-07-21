@@ -8,6 +8,7 @@ import type { CommunicationEvent } from '../types/evolution';
 export type FontScale = 1 | 1.25 | 1.5;
 
 export const FONT_SCALE_CACHE_KEY = 'falar:fontScale';
+export const SWITCH_SCANNING_CACHE_KEY = 'falar:switchScanning';
 
 interface AppState {
   itemsByCategory: Record<string, CommunicationItem[]>;
@@ -15,11 +16,13 @@ interface AppState {
   events: CommunicationEvent[];
   showAdmin: boolean;
   fontScale: FontScale;
+  switchScanningEnabled: boolean;
   setItemsByCategory: (itemsByCategory: Record<string, CommunicationItem[]>) => void;
   setEmergencyContacts: (emergencyContacts: EmergencyContact[]) => void;
   setEvents: (events: CommunicationEvent[]) => void;
   setShowAdmin: (showAdmin: boolean) => void;
   setFontScale: (fontScale: FontScale) => void;
+  setSwitchScanningEnabled: (enabled: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -28,6 +31,7 @@ export const useAppStore = create<AppState>((set) => ({
   events: [],
   showAdmin: false,
   fontScale: 1,
+  switchScanningEnabled: false,
   setItemsByCategory: (itemsByCategory) => set({ itemsByCategory }),
   setEmergencyContacts: (emergencyContacts) => set({ emergencyContacts }),
   setEvents: (events) => set({ events }),
@@ -35,5 +39,9 @@ export const useAppStore = create<AppState>((set) => ({
   setFontScale: (fontScale) => {
     set({ fontScale });
     writeCache(FONT_SCALE_CACHE_KEY, fontScale);
+  },
+  setSwitchScanningEnabled: (switchScanningEnabled) => {
+    set({ switchScanningEnabled });
+    writeCache(SWITCH_SCANNING_CACHE_KEY, switchScanningEnabled);
   },
 }));

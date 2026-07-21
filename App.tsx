@@ -24,7 +24,12 @@ import { firebaseConfig } from './src/services/firebase';
 import { addItem, clearItemPhoto, removeItem, setItemPhoto } from './src/services/items';
 import { readCache } from './src/services/localCache';
 import { generateLocalId, uploadItemPhoto } from './src/services/storage';
-import { FONT_SCALE_CACHE_KEY, type FontScale, useAppStore } from './src/store/useAppStore';
+import {
+  FONT_SCALE_CACHE_KEY,
+  type FontScale,
+  SWITCH_SCANNING_CACHE_KEY,
+  useAppStore,
+} from './src/store/useAppStore';
 import { colors } from './src/theme/colors';
 
 export default function App() {
@@ -36,13 +41,17 @@ export default function App() {
   const showAdmin = useAppStore((state) => state.showAdmin);
   const setShowAdmin = useAppStore((state) => state.setShowAdmin);
   const setFontScale = useAppStore((state) => state.setFontScale);
+  const setSwitchScanningEnabled = useAppStore((state) => state.setSwitchScanningEnabled);
   const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
 
   useEffect(() => {
     readCache<FontScale>(FONT_SCALE_CACHE_KEY).then((cached) => {
       if (cached) setFontScale(cached);
     });
-  }, [setFontScale]);
+    readCache<boolean>(SWITCH_SCANNING_CACHE_KEY).then((cached) => {
+      if (cached) setSwitchScanningEnabled(cached);
+    });
+  }, [setFontScale, setSwitchScanningEnabled]);
 
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
   const [pendingName, setPendingName] = useState('');
