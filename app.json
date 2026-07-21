@@ -31,6 +31,12 @@
           "photosPermission": "O app usa fotos da galeria para ilustrar os itens de comunicação, quando a família adicionar uma imagem.",
           "cameraPermission": "O app usa a câmera para fotografar itens de comunicação, quando a família quiser."
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O app usa sua localização para enviar por SMS aos contatos de emergência quando você tocar em pedir ajuda."
+        }
       ]
     ]
   }

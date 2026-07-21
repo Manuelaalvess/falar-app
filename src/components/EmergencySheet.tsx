@@ -1,5 +1,17 @@
-import { Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
+import { getCurrentLocationMapsUrl } from '../services/location';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { EmergencyContact } from '../types/emergency';
@@ -10,12 +22,39 @@ interface EmergencySheetProps {
   onClose: () => void;
 }
 
+function buildSmsUrl(phone: string, body: string): string {
+  const digits = phone.replace(/\D/g, '');
+  const encodedBody = encodeURIComponent(body);
+  const separator = Platform.OS === 'ios' ? '&' : '?';
+  return `sms:${digits}${separator}body=${encodedBody}`;
+}
+
 export function EmergencySheet({ visible, contacts, onClose }: EmergencySheetProps) {
+  const [sendingLocationFor, setSendingLocationFor] = useState<string | null>(null);
   const callable = contacts.filter((contact) => contact.phone.trim().length > 0);
 
   function handleCall(phone: string) {
-    const digits = phone.replace(/\D/g, '');
-    Linking.openURL(`tel:${digits}`);
+    Linking.openURL(`tel:${phone.replace(/\D/g, '')}`);
+  }
+
+  async function handleSendLocation(contact: EmergencyContact) {
+    setSendingLocationFor(contact.id);
+    try {
+      const mapsUrl = await getCurrentLocationMapsUrl();
+      if (!mapsUrl) {
+        Alert.alert(
+          'Permissão necessária',
+          'Precisamos de acesso à sua localização para enviar por SMS.',
+        );
+        return;
+      }
+      const body = `Preciso de ajuda. Minha localização: ${mapsUrl}`;
+      Linking.openURL(buildSmsUrl(contact.phone, body));
+    } catch {
+      Alert.alert('Não foi possível obter sua localização', 'Tente novamente em alguns segundos.');
+    } finally {
+      setSendingLocationFor(null);
+    }
   }
 
   return (
@@ -31,9 +70,22 @@ export function EmergencySheet({ visible, contacts, onClose }: EmergencySheetPro
                   <Text style={styles.contactName}>{contact.name}</Text>
                   <Text style={styles.contactRelation}>{contact.relation}</Text>
                 </View>
-                <Pressable style={styles.callButton} onPress={() => handleCall(contact.phone)}>
-                  <Text style={styles.callButtonLabel}>📞 Ligar</Text>
-                </Pressable>
+                <View style={styles.contactActions}>
+                  <Pressable style={styles.callButton} onPress={() => handleCall(contact.phone)}>
+                    <Text style={styles.callButtonLabel}>📞 Ligar</Text>
+                  </Pressable>
+                  <Pressable
+                    style={styles.locationButton}
+                    onPress={() => handleSendLocation(contact)}
+                    disabled={sendingLocationFor === contact.id}
+                  >
+                    {sendingLocationFor === contact.id ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.locationButtonLabel}>📍 Localização</Text>
+                    )}
+                  </Pressable>
+                </View>
               </View>
             ))
           ) : (
@@ -96,15 +148,33 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.bodySmall,
     color: colors.muted,
   },
+  contactActions: {
+    gap: 8,
+  },
   callButton: {
     backgroundColor: colors.success,
     borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
   },
   callButtonLabel: {
     fontFamily: fonts.headingMedium,
-    fontSize: 15,
+    fontSize: 14,
+    color: '#fff',
+  },
+  locationButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    minHeight: 34,
+    justifyContent: 'center',
+  },
+  locationButtonLabel: {
+    fontFamily: fonts.headingMedium,
+    fontSize: 14,
     color: '#fff',
   },
   emptyText: {
