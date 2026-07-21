@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import type { ConfirmationResult } from 'firebase/auth';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
@@ -22,8 +22,9 @@ import { confirmVerificationCode, sendVerificationCode, signOut } from './src/se
 import { addContact, removeContact } from './src/services/emergency';
 import { firebaseConfig } from './src/services/firebase';
 import { addItem, clearItemPhoto, removeItem, setItemPhoto } from './src/services/items';
+import { readCache } from './src/services/localCache';
 import { generateLocalId, uploadItemPhoto } from './src/services/storage';
-import { useAppStore } from './src/store/useAppStore';
+import { FONT_SCALE_CACHE_KEY, type FontScale, useAppStore } from './src/store/useAppStore';
 import { colors } from './src/theme/colors';
 
 export default function App() {
@@ -34,7 +35,14 @@ export default function App() {
   useEvolutionEvents(user?.uid ?? null);
   const showAdmin = useAppStore((state) => state.showAdmin);
   const setShowAdmin = useAppStore((state) => state.setShowAdmin);
+  const setFontScale = useAppStore((state) => state.setFontScale);
   const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
+
+  useEffect(() => {
+    readCache<FontScale>(FONT_SCALE_CACHE_KEY).then((cached) => {
+      if (cached) setFontScale(cached);
+    });
+  }, [setFontScale]);
 
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
   const [pendingName, setPendingName] = useState('');

@@ -21,6 +21,7 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
   const itemsByCategory = useAppStore((state) => state.itemsByCategory);
   const emergencyContacts = useAppStore((state) => state.emergencyContacts);
   const events = useAppStore((state) => state.events);
+  const fontScale = useAppStore((state) => state.fontScale);
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
   const [confirmedItem, setConfirmedItem] = useState<CommunicationItem | null>(null);
   const [showSOS, setShowSOS] = useState(false);
@@ -65,7 +66,10 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                 return (
                   <Pressable
                     key={category.key}
-                    style={[styles.categoryTile, { backgroundColor: categoryColors.background }]}
+                    style={[
+                      styles.categoryTile,
+                      { backgroundColor: categoryColors.background, minHeight: 120 * fontScale },
+                    ]}
                     onPress={() => setOpenCategoryKey(category.key)}
                   >
                     {isSuggested ? (
@@ -73,8 +77,15 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                         <Text style={styles.suggestedBadgeLabel}>⭐ Sugestão</Text>
                       </View>
                     ) : null}
-                    <Text style={styles.tileEmoji}>{category.emoji}</Text>
-                    <Text style={[styles.tileLabel, { color: categoryColors.foreground }]}>
+                    <Text style={[styles.tileEmoji, { fontSize: 34 * fontScale }]}>
+                      {category.emoji}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.tileLabel,
+                        { color: categoryColors.foreground, fontSize: 17 * fontScale },
+                      ]}
+                    >
                       {category.label}
                     </Text>
                   </Pressable>
@@ -85,8 +96,11 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
         ) : (
           <>
             <View style={styles.backRow}>
-              <Pressable style={styles.backButton} onPress={() => setOpenCategoryKey(null)}>
-                <Text style={styles.backButtonLabel}>←</Text>
+              <Pressable
+                style={[styles.backButton, { width: 48 * fontScale, height: 48 * fontScale }]}
+                onPress={() => setOpenCategoryKey(null)}
+              >
+                <Text style={[styles.backButtonLabel, { fontSize: 22 * fontScale }]}>←</Text>
               </Pressable>
               <Text style={styles.sectionLabelInline}>
                 {openCategory.emoji} {openCategory.label}
@@ -97,7 +111,7 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                 {items.map((item) => (
                   <Pressable
                     key={item.id}
-                    style={styles.itemTile}
+                    style={[styles.itemTile, { minHeight: 110 * fontScale }]}
                     onPress={() => handleChooseItem(item)}
                   >
                     {item.photoUrl ? (
@@ -107,9 +121,13 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                         contentFit="cover"
                       />
                     ) : (
-                      <Text style={styles.tileEmoji}>{item.emoji}</Text>
+                      <Text style={[styles.tileEmoji, { fontSize: 34 * fontScale }]}>
+                        {item.emoji}
+                      </Text>
                     )}
-                    <Text style={styles.itemLabel}>{item.name}</Text>
+                    <Text style={[styles.itemLabel, { fontSize: 16 * fontScale }]}>
+                      {item.name}
+                    </Text>
                   </Pressable>
                 ))}
               </View>
@@ -132,9 +150,13 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                 contentFit="cover"
               />
             ) : (
-              <Text style={styles.confirmEmoji}>{confirmedItem.emoji}</Text>
+              <Text style={[styles.confirmEmoji, { fontSize: 64 * fontScale }]}>
+                {confirmedItem.emoji}
+              </Text>
             )}
-            <Text style={styles.confirmLabel}>{confirmedItem.name}</Text>
+            <Text style={[styles.confirmLabel, { fontSize: 24 * fontScale }]}>
+              {confirmedItem.name}
+            </Text>
           </View>
         </View>
       ) : null}

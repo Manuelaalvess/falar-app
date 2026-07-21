@@ -6,7 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { CATEGORIES, EMOJI_CHOICES } from '../constants/communication';
-import { useAppStore } from '../store/useAppStore';
+import { type FontScale, useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import type { CommunicationCategory, CommunicationItem } from '../types/communication';
@@ -53,6 +53,8 @@ export function AdminScreen({
   const itemsByCategory = useAppStore((state) => state.itemsByCategory);
   const emergencyContacts = useAppStore((state) => state.emergencyContacts);
   const events = useAppStore((state) => state.events);
+  const fontScale = useAppStore((state) => state.fontScale);
+  const setFontScale = useAppStore((state) => state.setFontScale);
   const [tab, setTab] = useState<AdminTab>('perfil');
 
   return (
@@ -94,6 +96,8 @@ export function AdminScreen({
       <ScrollView contentContainerStyle={styles.body}>
         {tab === 'perfil' ? (
           <>
+            <Text style={styles.sectionLabel}>Acessibilidade</Text>
+            <AccessibilityBlock fontScale={fontScale} onChangeFontScale={setFontScale} />
             <Text style={styles.sectionLabel}>Personalize as categorias que o paciente usa</Text>
             {CATEGORIES.map((category) => (
               <CategoryBlock
@@ -120,6 +124,46 @@ export function AdminScreen({
           <Text style={styles.signOutLabel}>Sair da conta</Text>
         </Pressable>
       </ScrollView>
+    </View>
+  );
+}
+
+const FONT_SCALE_OPTIONS: { value: FontScale; label: string }[] = [
+  { value: 1, label: 'Normal' },
+  { value: 1.25, label: 'Grande' },
+  { value: 1.5, label: 'Extra grande' },
+];
+
+interface AccessibilityBlockProps {
+  fontScale: FontScale;
+  onChangeFontScale: (scale: FontScale) => void;
+}
+
+function AccessibilityBlock({ fontScale, onChangeFontScale }: AccessibilityBlockProps) {
+  return (
+    <View style={styles.block}>
+      <Text style={styles.blockTitle}>Tamanho da letra e dos botões</Text>
+      <View style={styles.fontScaleRow}>
+        {FONT_SCALE_OPTIONS.map((option) => (
+          <Pressable
+            key={option.value}
+            style={[
+              styles.fontScaleButton,
+              fontScale === option.value && styles.fontScaleButtonActive,
+            ]}
+            onPress={() => onChangeFontScale(option.value)}
+          >
+            <Text
+              style={[
+                styles.fontScaleButtonLabel,
+                fontScale === option.value && styles.fontScaleButtonLabelActive,
+              ]}
+            >
+              {option.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
@@ -807,5 +851,29 @@ const styles = StyleSheet.create({
     fontFamily: fonts.body,
     fontSize: fontSizes.bodySmall,
     color: colors.muted,
+  },
+  fontScaleRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  fontScaleButton: {
+    flex: 1,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  fontScaleButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  fontScaleButtonLabel: {
+    fontFamily: fonts.headingMedium,
+    fontSize: fontSizes.bodySmall,
+    color: colors.ink,
+  },
+  fontScaleButtonLabelActive: {
+    color: '#fff',
   },
 });
