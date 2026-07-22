@@ -46,6 +46,9 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
         internet, aparece também no celular de outro familiar logado na mesma conta. 1 toque abre a
         lista para escolher contato ou enviar SMS manualmente.
       </Text>
+      <Text style={styles.hintText}>
+        Ative notificações neste celular para ser avisada na hora do SOS.
+      </Text>
       {lastSosAlert ? (
         <View style={[styles.block, styles.sosAlertBlock]}>
           <Text style={styles.blockTitle}>Último SOS (2 toques)</Text>

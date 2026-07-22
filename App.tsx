@@ -18,6 +18,7 @@ import { useEmergencyContacts } from './src/hooks/useEmergencyContacts';
 import { useEvolutionEvents } from './src/hooks/useEvolutionEvents';
 import { useItems } from './src/hooks/useItems';
 import { usePatientActions } from './src/hooks/usePatientActions';
+import { usePushRegistration } from './src/hooks/usePushRegistration';
 import { AdminScreen } from './src/screens/admin/AdminScreen';
 import { ComunicarScreen } from './src/screens/ComunicarScreen';
 import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
@@ -28,8 +29,10 @@ import {
   signOut,
   updatePatientName,
 } from './src/services/auth';
+import { getDeviceId } from './src/services/deviceId';
 import { firebaseConfig } from './src/services/firebase';
 import { readCache } from './src/services/localCache';
+import { removePushToken } from './src/services/pushTokens';
 import {
   FONT_SCALE_CACHE_KEY,
   type FontScale,
@@ -45,6 +48,7 @@ export default function App() {
   const { loading: contactsLoading } = useEmergencyContacts(user?.uid ?? null);
   const { loading: eventsLoading } = useEvolutionEvents(user?.uid ?? null);
   const appDataReady = useAppDataReady(itemsLoading, contactsLoading, eventsLoading);
+  usePushRegistration(user?.uid ?? null);
   const { handleAddItem, handleRemoveItem, handleAddContact, handleRemoveContact } =
     usePatientActions(user?.uid ?? null);
   const showAdmin = useAppStore((state) => state.showAdmin);
@@ -120,6 +124,16 @@ export default function App() {
     setErrorMessage(null);
   }
 
+  async function handleSignOut() {
+    if (user) {
+      const deviceId = await getDeviceId();
+      await removePushToken(user.uid, deviceId).catch((error: unknown) => {
+        console.error('Falha ao remover token de push:', error);
+      });
+    }
+    await signOut();
+  }
+
   if (!fontsLoaded || initializing) {
     return (
       <SafeAreaProvider>
@@ -153,7 +167,7 @@ export default function App() {
                 onAddContact={handleAddContact}
                 onRemoveContact={handleRemoveContact}
                 onClose={() => setShowAdmin(false)}
-                onSignOut={signOut}
+                onSignOut={handleSignOut}
               />
             ) : (
               <>

@@ -43,7 +43,8 @@
         {
           "faceIDPermission": "O app usa reconhecimento facial para proteger o acesso à Área da família."
         }
-      ]
+      ],
+      "expo-notifications"
     ]
   }
 }

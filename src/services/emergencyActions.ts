@@ -3,8 +3,11 @@ import { Linking } from 'react-native';
 import { useAppStore } from '../store/useAppStore';
 import type { EmergencyContact } from '../types/emergency';
 import { toE164BR } from './auth';
+import { getDeviceId } from './deviceId';
 import { persistEmergencySosAlert } from './emergency';
+import { sendPushNotifications } from './expoPush';
 import { getCurrentLocationMapsUrl } from './location';
+import { getOtherDeviceTokens } from './pushTokens';
 
 export function getCallableContacts(contacts: EmergencyContact[]): EmergencyContact[] {
   return contacts.filter((contact) => contact.phone.trim().length > 0);
@@ -39,7 +42,25 @@ export async function triggerDoubleTapEmergency(
 
   await Linking.openURL(`tel:${phone}`);
 
+  notifyOtherDevices(uid, contact, mapsUrl).catch((error: unknown) => {
+    console.error('Falha ao notificar outros aparelhos do SOS:', error);
+  });
+
   return { locationOk: mapsUrl !== null };
+}
+
+/** Avisa por push os outros aparelhos logados na mesma conta (ex: celular da filha). */
+async function notifyOtherDevices(
+  uid: string,
+  contact: EmergencyContact,
+  mapsUrl: string | null,
+): Promise<void> {
+  const deviceId = await getDeviceId();
+  const tokens = await getOtherDeviceTokens(uid, deviceId);
+  const body = mapsUrl
+    ? `Ligou para ${contact.name}. Localização registrada no app.`
+    : `Ligou para ${contact.name}. Sem localização GPS neste acionamento.`;
+  await sendPushNotifications(tokens, 'SOS acionado no Falar', body);
 }
 
 // Re-export para o sheet (1 toque → SMS manual)
