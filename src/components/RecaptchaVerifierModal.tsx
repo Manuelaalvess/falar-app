@@ -21,7 +21,8 @@ interface RecaptchaVerifierModalProps {
   cancelLabel?: string;
 }
 
-const FIREBASE_JS_VERSION = '10.12.2';
+// Mantenha alinhado com a versao do pacote "firebase" no package.json.
+const FIREBASE_JS_VERSION = '12.16.0';
 
 function buildRecaptchaHtml(firebaseConfig: FirebaseOptions): string {
   return `<!DOCTYPE html><html>

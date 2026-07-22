@@ -62,6 +62,11 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
           ) : (
             <Text style={styles.emptyLabel}>Sem localização GPS neste acionamento.</Text>
           )}
+          {lastSosAlert.id.startsWith('local-') ? (
+            <Text style={styles.emptyLabel}>
+              Ainda não confirmado na nuvem (sem internet no momento do acionamento).
+            </Text>
+          ) : null}
         </View>
       ) : null}
       <View style={styles.block}>
