@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdminGateModal } from './src/components/AdminGateModal';
+import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import { AppHeader } from './src/components/AppHeader';
 import {
   type RecaptchaVerifierHandle,
@@ -18,7 +19,7 @@ import { useEvolutionEvents } from './src/hooks/useEvolutionEvents';
 import { useItems } from './src/hooks/useItems';
 import { usePatientActions } from './src/hooks/usePatientActions';
 import { useVoiceSync } from './src/hooks/useVoiceSync';
-import { AdminScreen } from './src/screens/AdminScreen';
+import { AdminScreen } from './src/screens/admin/AdminScreen';
 import { ComunicarScreen } from './src/screens/ComunicarScreen';
 import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
 import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
@@ -130,64 +131,66 @@ export default function App() {
   }
 
   return (
-    <SafeAreaProvider>
-      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-        <RecaptchaVerifierModal
-          ref={recaptchaVerifier}
-          firebaseConfig={firebaseConfig}
-          title="Verificação de segurança"
-          cancelLabel="Cancelar"
-        />
-        {user ? (
-          !appDataReady ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator color={colors.primary} size="large" />
-            </View>
-          ) : showAdmin ? (
-            <AdminScreen
-              uid={user.uid}
-              patientName={patientName}
-              onUpdatePatientName={handleUpdatePatientName}
-              onAddItem={handleAddItem}
-              onRemoveItem={handleRemoveItem}
-              onAddContact={handleAddContact}
-              onRemoveContact={handleRemoveContact}
-              onClose={() => setShowAdmin(false)}
-              onSignOut={signOut}
+    <AppErrorBoundary>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+          <RecaptchaVerifierModal
+            ref={recaptchaVerifier}
+            firebaseConfig={firebaseConfig}
+            title="Verificação de segurança"
+            cancelLabel="Cancelar"
+          />
+          {user ? (
+            !appDataReady ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color={colors.primary} size="large" />
+              </View>
+            ) : showAdmin ? (
+              <AdminScreen
+                uid={user.uid}
+                patientName={patientName}
+                onUpdatePatientName={handleUpdatePatientName}
+                onAddItem={handleAddItem}
+                onRemoveItem={handleRemoveItem}
+                onAddContact={handleAddContact}
+                onRemoveContact={handleRemoveContact}
+                onClose={() => setShowAdmin(false)}
+                onSignOut={signOut}
+              />
+            ) : (
+              <>
+                <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdminGate(true)} />
+                <ComunicarScreen uid={user.uid} />
+                <AdminGateModal
+                  visible={showAdminGate}
+                  uid={user.uid}
+                  onSuccess={() => {
+                    setShowAdminGate(false);
+                    setShowAdmin(true);
+                  }}
+                  onCancel={() => setShowAdminGate(false)}
+                />
+              </>
+            )
+          ) : confirmation ? (
+            <VerifyCodeScreen
+              phone={pendingPhone}
+              onConfirm={handleConfirmCode}
+              onBack={handleBackToLogin}
+              isSubmitting={isSubmitting}
+              errorMessage={errorMessage}
             />
           ) : (
-            <>
-              <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdminGate(true)} />
-              <ComunicarScreen uid={user.uid} />
-              <AdminGateModal
-                visible={showAdminGate}
-                uid={user.uid}
-                onSuccess={() => {
-                  setShowAdminGate(false);
-                  setShowAdmin(true);
-                }}
-                onCancel={() => setShowAdminGate(false)}
-              />
-            </>
-          )
-        ) : confirmation ? (
-          <VerifyCodeScreen
-            phone={pendingPhone}
-            onConfirm={handleConfirmCode}
-            onBack={handleBackToLogin}
-            isSubmitting={isSubmitting}
-            errorMessage={errorMessage}
-          />
-        ) : (
-          <LoginScreen
-            onSubmit={handleLoginSubmit}
-            isSubmitting={isSubmitting}
-            errorMessage={errorMessage}
-          />
-        )}
-        <StatusBar style="dark" />
-      </SafeAreaView>
-    </SafeAreaProvider>
+            <LoginScreen
+              onSubmit={handleLoginSubmit}
+              isSubmitting={isSubmitting}
+              errorMessage={errorMessage}
+            />
+          )}
+          <StatusBar style="dark" />
+        </SafeAreaView>
+      </SafeAreaProvider>
+    </AppErrorBoundary>
   );
 }
 
