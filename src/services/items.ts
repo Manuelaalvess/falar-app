@@ -14,7 +14,6 @@ import { DEFAULT_ITEMS } from '../constants/communication';
 import type { CommunicationItem } from '../types/communication';
 import { deleteRecording } from './audioRecordings';
 import { firestore } from './firebase';
-import { deleteRecordingFromCloud } from './voiceStorage';
 
 function itemsCollection(uid: string) {
   return collection(firestore, 'users', uid, 'items');
@@ -60,7 +59,6 @@ export async function addItem(
 export async function removeItem(uid: string, itemId: string): Promise<void> {
   await deleteDoc(doc(itemsCollection(uid), itemId));
   deleteRecording(itemId);
-  void deleteRecordingFromCloud(uid, itemId);
 }
 
 export async function seedDefaultItemsIfEmpty(uid: string): Promise<void> {

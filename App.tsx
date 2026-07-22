@@ -18,7 +18,6 @@ import { useEmergencyContacts } from './src/hooks/useEmergencyContacts';
 import { useEvolutionEvents } from './src/hooks/useEvolutionEvents';
 import { useItems } from './src/hooks/useItems';
 import { usePatientActions } from './src/hooks/usePatientActions';
-import { useVoiceSync } from './src/hooks/useVoiceSync';
 import { AdminScreen } from './src/screens/admin/AdminScreen';
 import { ComunicarScreen } from './src/screens/ComunicarScreen';
 import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
@@ -46,7 +45,6 @@ export default function App() {
   const { loading: contactsLoading } = useEmergencyContacts(user?.uid ?? null);
   const { loading: eventsLoading } = useEvolutionEvents(user?.uid ?? null);
   const appDataReady = useAppDataReady(itemsLoading, contactsLoading, eventsLoading);
-  useVoiceSync(user?.uid ?? null);
   const { handleAddItem, handleRemoveItem, handleAddContact, handleRemoveContact } =
     usePatientActions(user?.uid ?? null);
   const showAdmin = useAppStore((state) => state.showAdmin);

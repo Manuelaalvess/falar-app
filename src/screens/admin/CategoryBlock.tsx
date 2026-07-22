@@ -6,27 +6,19 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { VoiceRecorderModal } from '../../components/VoiceRecorderModal';
 import { EMOJI_CHOICES } from '../../constants/communication';
 import { deleteRecording, getRecordingUri, saveRecording } from '../../services/audioRecordings';
-import { deleteRecordingFromCloud, uploadRecording } from '../../services/voiceStorage';
 import { colors } from '../../theme/colors';
 import type { CommunicationCategory, CommunicationItem } from '../../types/communication';
 import { type ItemFormValues, itemFormSchema } from '../../validation/adminForms';
 import { styles } from './adminStyles';
 
 interface CategoryBlockProps {
-  uid: string;
   category: CommunicationCategory;
   items: CommunicationItem[];
   onAddItem: (category: string, name: string, emoji: string) => void;
   onRemoveItem: (itemId: string) => void;
 }
 
-export function CategoryBlock({
-  uid,
-  category,
-  items,
-  onAddItem,
-  onRemoveItem,
-}: CategoryBlockProps) {
+export function CategoryBlock({ category, items, onAddItem, onRemoveItem }: CategoryBlockProps) {
   const {
     control,
     handleSubmit,
@@ -41,20 +33,14 @@ export function CategoryBlock({
 
   function handleSaveRecording(temporaryUri: string) {
     if (!activeRecordingItem) return;
-    const itemId = activeRecordingItem.id;
-    const savedUri = saveRecording(itemId, temporaryUri);
+    saveRecording(activeRecordingItem.id, temporaryUri);
     bumpRecordingsVersion((version) => version + 1);
-    uploadRecording(uid, itemId, savedUri).catch((error: unknown) => {
-      console.error('Falha ao enviar gravacao para a nuvem:', error);
-    });
   }
 
   function handleDeleteRecording() {
     if (!activeRecordingItem) return;
-    const itemId = activeRecordingItem.id;
-    deleteRecording(itemId);
+    deleteRecording(activeRecordingItem.id);
     bumpRecordingsVersion((version) => version + 1);
-    void deleteRecordingFromCloud(uid, itemId);
   }
 
   function onSubmit(values: ItemFormValues) {

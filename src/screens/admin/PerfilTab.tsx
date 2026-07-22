@@ -154,14 +154,9 @@ export function PerfilTab({
         onChangeSwitchScanning={onChangeSwitchScanning}
       />
       <Text style={styles.sectionLabel}>Personalize as categorias que o paciente usa</Text>
-      <Text style={styles.hintText}>
-        As gravações de voz ficam salvas na conta e são sincronizadas em outros aparelhos conectados
-        a ela.
-      </Text>
       {CATEGORIES.map((category) => (
         <CategoryBlock
           key={category.key}
-          uid={uid}
           category={category}
           items={itemsByCategory[category.key] ?? []}
           onAddItem={onAddItem}
