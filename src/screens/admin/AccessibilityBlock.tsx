@@ -14,6 +14,8 @@ interface AccessibilityBlockProps {
   onChangeFontScale: (scale: FontScale) => void;
   switchScanningEnabled: boolean;
   onChangeSwitchScanning: (enabled: boolean) => void;
+  lowLiteracyMode: boolean;
+  onChangeLowLiteracyMode: (enabled: boolean) => void;
 }
 
 export function AccessibilityBlock({
@@ -21,6 +23,8 @@ export function AccessibilityBlock({
   onChangeFontScale,
   switchScanningEnabled,
   onChangeSwitchScanning,
+  lowLiteracyMode,
+  onChangeLowLiteracyMode,
 }: AccessibilityBlockProps) {
   return (
     <View style={styles.block}>
@@ -77,6 +81,40 @@ export function AccessibilityBlock({
             ]}
           >
             Ligada
+          </Text>
+        </Pressable>
+      </View>
+
+      <Text style={styles.switchScanningTitle}>Modo baixo letramento</Text>
+      <Text style={styles.switchScanningDescription}>
+        Reduz o texto na tela de Comunicar (o emoji domina) e adiciona botões fixos de
+        &ldquo;Sim&rdquo; e &ldquo;Não&rdquo; sempre visíveis.
+      </Text>
+      <View style={styles.fontScaleRow}>
+        <Pressable
+          style={[styles.fontScaleButton, !lowLiteracyMode && styles.fontScaleButtonActive]}
+          onPress={() => onChangeLowLiteracyMode(false)}
+        >
+          <Text
+            style={[
+              styles.fontScaleButtonLabel,
+              !lowLiteracyMode && styles.fontScaleButtonLabelActive,
+            ]}
+          >
+            Desligado
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.fontScaleButton, lowLiteracyMode && styles.fontScaleButtonActive]}
+          onPress={() => onChangeLowLiteracyMode(true)}
+        >
+          <Text
+            style={[
+              styles.fontScaleButtonLabel,
+              lowLiteracyMode && styles.fontScaleButtonLabelActive,
+            ]}
+          >
+            Ligado
           </Text>
         </Pressable>
       </View>

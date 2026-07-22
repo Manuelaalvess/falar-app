@@ -126,6 +126,8 @@ interface PerfilTabProps {
   onChangeFontScale: (scale: FontScale) => void;
   switchScanningEnabled: boolean;
   onChangeSwitchScanning: (enabled: boolean) => void;
+  lowLiteracyMode: boolean;
+  onChangeLowLiteracyMode: (enabled: boolean) => void;
 }
 
 export function PerfilTab({
@@ -139,6 +141,8 @@ export function PerfilTab({
   onChangeFontScale,
   switchScanningEnabled,
   onChangeSwitchScanning,
+  lowLiteracyMode,
+  onChangeLowLiteracyMode,
 }: PerfilTabProps) {
   return (
     <>
@@ -152,6 +156,8 @@ export function PerfilTab({
         onChangeFontScale={onChangeFontScale}
         switchScanningEnabled={switchScanningEnabled}
         onChangeSwitchScanning={onChangeSwitchScanning}
+        lowLiteracyMode={lowLiteracyMode}
+        onChangeLowLiteracyMode={onChangeLowLiteracyMode}
       />
       <Text style={styles.sectionLabel}>Personalize as categorias que o paciente usa</Text>
       {CATEGORIES.map((category) => (

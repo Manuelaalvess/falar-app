@@ -30,6 +30,7 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
   const events = useAppStore((state) => state.events);
   const fontScale = useAppStore((state) => state.fontScale);
   const switchScanningEnabled = useAppStore((state) => state.switchScanningEnabled);
+  const lowLiteracyMode = useAppStore((state) => state.lowLiteracyMode);
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
   const [confirmedItem, setConfirmedItem] = useState<CommunicationItem | null>(null);
   const [showSOS, setShowSOS] = useState(false);
@@ -43,8 +44,12 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
   }, [confirmedItem]);
 
   const openCategory = CATEGORIES.find((category) => category.key === openCategoryKey);
+  const precisoCategory = CATEGORIES.find((category) => category.key === 'preciso');
+  const precisoItems = itemsByCategory['preciso'] ?? [];
+  const simItem = precisoItems.find((item) => item.name === 'Sim');
+  const naoItem = precisoItems.find((item) => item.name === 'Não');
 
-  function handleChooseItem(item: CommunicationItem) {
+  function handleChooseItem(item: CommunicationItem, category = openCategory) {
     const recordingUri = getRecordingUri(item.id);
     if (recordingUri) {
       playSound(recordingUri).catch((error: unknown) => {
@@ -55,8 +60,8 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
       speak(item.name);
     }
     setConfirmedItem(item);
-    if (openCategory) {
-      logEvent(uid, openCategory.key, openCategory.label, item.name).catch((error: unknown) => {
+    if (category) {
+      logEvent(uid, category.key, category.label, item.name).catch((error: unknown) => {
         console.error('Falha ao registrar evento de comunicacao:', error);
       });
     }
@@ -83,6 +88,16 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
     }, SCAN_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [switchScanningEnabled, confirmedItem, showSOS, scanList.length]);
+
+  useEffect(() => {
+    if (!switchScanningEnabled || confirmedItem || showSOS) return;
+    const highlighted = scanList[highlightedIndex];
+    if (!highlighted) return;
+    const label = openCategory
+      ? (highlighted as CommunicationItem).name
+      : (highlighted as (typeof CATEGORIES)[number]).label;
+    speak(label);
+  }, [highlightedIndex, switchScanningEnabled, confirmedItem, showSOS, scanList, openCategory]);
 
   function handleScanSelect() {
     const highlighted = scanList[highlightedIndex];
@@ -131,13 +146,41 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
             });
           }}
         />
+        {lowLiteracyMode && simItem && naoItem ? (
+          <View style={styles.simNaoRow}>
+            <Pressable
+              style={[styles.simNaoButton, styles.simButton]}
+              onPress={() => handleChooseItem(simItem, precisoCategory)}
+              accessibilityRole="button"
+              accessibilityLabel="Sim"
+            >
+              <Text style={[styles.simNaoEmoji, { fontSize: scaledSize(40, fontScale) }]}>
+                {simItem.emoji}
+              </Text>
+              <Text style={[styles.simNaoLabel, { fontSize: scaledSize(18, fontScale) }]}>Sim</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.simNaoButton, styles.naoButton]}
+              onPress={() => handleChooseItem(naoItem, precisoCategory)}
+              accessibilityRole="button"
+              accessibilityLabel="Não"
+            >
+              <Text style={[styles.simNaoEmoji, { fontSize: scaledSize(40, fontScale) }]}>
+                {naoItem.emoji}
+              </Text>
+              <Text style={[styles.simNaoLabel, { fontSize: scaledSize(18, fontScale) }]}>Não</Text>
+            </Pressable>
+          </View>
+        ) : null}
         {!openCategory ? (
           <>
-            <Text
-              style={[styles.sectionLabel, { fontSize: scaledSize(fontSizes.label, fontScale) }]}
-            >
-              O que você quer dizer?
-            </Text>
+            {!lowLiteracyMode ? (
+              <Text
+                style={[styles.sectionLabel, { fontSize: scaledSize(fontSizes.label, fontScale) }]}
+              >
+                O que você quer dizer?
+              </Text>
+            ) : null}
             <View style={styles.grid}>
               {CATEGORIES.map((category, index) => {
                 const categoryColors = CATEGORY_COLORS[category.key];
@@ -152,6 +195,8 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                       isHighlighted && styles.scanHighlight,
                     ]}
                     onPress={() => setOpenCategoryKey(category.key)}
+                    accessibilityRole="button"
+                    accessibilityLabel={category.label}
                   >
                     {isSuggested ? (
                       <View style={styles.suggestedBadge}>
@@ -161,14 +206,16 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                     <Text style={[styles.tileEmoji, { fontSize: 34 * fontScale }]}>
                       {category.emoji}
                     </Text>
-                    <Text
-                      style={[
-                        styles.tileLabel,
-                        { color: categoryColors.foreground, fontSize: 17 * fontScale },
-                      ]}
-                    >
-                      {category.label}
-                    </Text>
+                    {!lowLiteracyMode ? (
+                      <Text
+                        style={[
+                          styles.tileLabel,
+                          { color: categoryColors.foreground, fontSize: 17 * fontScale },
+                        ]}
+                      >
+                        {category.label}
+                      </Text>
+                    ) : null}
                   </Pressable>
                 );
               })}
@@ -180,17 +227,21 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
               <Pressable
                 style={[styles.backButton, { width: 48 * fontScale, height: 48 * fontScale }]}
                 onPress={() => setOpenCategoryKey(null)}
+                accessibilityRole="button"
+                accessibilityLabel="Voltar"
               >
                 <Text style={[styles.backButtonLabel, { fontSize: 22 * fontScale }]}>←</Text>
               </Pressable>
-              <Text
-                style={[
-                  styles.sectionLabelInline,
-                  { fontSize: scaledSize(fontSizes.label, fontScale) },
-                ]}
-              >
-                {openCategory.emoji} {openCategory.label}
-              </Text>
+              {!lowLiteracyMode ? (
+                <Text
+                  style={[
+                    styles.sectionLabelInline,
+                    { fontSize: scaledSize(fontSizes.label, fontScale) },
+                  ]}
+                >
+                  {openCategory.emoji} {openCategory.label}
+                </Text>
+              ) : null}
             </View>
             {items.length > 0 ? (
               <View style={styles.grid}>
@@ -205,13 +256,17 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                         isHighlighted && styles.scanHighlight,
                       ]}
                       onPress={() => handleChooseItem(item)}
+                      accessibilityRole="button"
+                      accessibilityLabel={item.name}
                     >
                       <Text style={[styles.tileEmoji, { fontSize: 34 * fontScale }]}>
                         {item.emoji}
                       </Text>
-                      <Text style={[styles.itemLabel, { fontSize: 16 * fontScale }]}>
-                        {item.name}
-                      </Text>
+                      {!lowLiteracyMode ? (
+                        <Text style={[styles.itemLabel, { fontSize: 16 * fontScale }]}>
+                          {item.name}
+                        </Text>
+                      ) : null}
                     </Pressable>
                   );
                 })}
@@ -228,7 +283,12 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
       </ScrollView>
 
       {switchScanningEnabled ? (
-        <Pressable style={styles.scanSelectButton} onPress={handleScanSelect}>
+        <Pressable
+          style={styles.scanSelectButton}
+          onPress={handleScanSelect}
+          accessibilityRole="button"
+          accessibilityLabel="Selecionar"
+        >
           <Text style={[styles.scanSelectButtonLabel, { fontSize: scaledSize(20, fontScale) }]}>
             ✅ Selecionar
           </Text>
@@ -272,6 +332,36 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     color: colors.muted,
     marginBottom: 12,
+  },
+  simNaoRow: {
+    flexDirection: 'row',
+    gap: 14,
+    marginBottom: 18,
+  },
+  simNaoButton: {
+    flex: 1,
+    minHeight: 88,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    borderWidth: 2,
+  },
+  simButton: {
+    backgroundColor: colors.categories.need.background,
+    borderColor: colors.success,
+  },
+  naoButton: {
+    backgroundColor: colors.categories.food.background,
+    borderColor: colors.danger,
+  },
+  simNaoEmoji: {
+    fontSize: 40,
+  },
+  simNaoLabel: {
+    fontFamily: fonts.headingBold,
+    fontSize: 18,
+    color: colors.ink,
   },
   sectionLabelInline: {
     fontFamily: fonts.headingBold,

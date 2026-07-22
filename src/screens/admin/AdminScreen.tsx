@@ -39,6 +39,8 @@ export function AdminScreen({
   const setFontScale = useAppStore((state) => state.setFontScale);
   const switchScanningEnabled = useAppStore((state) => state.switchScanningEnabled);
   const setSwitchScanningEnabled = useAppStore((state) => state.setSwitchScanningEnabled);
+  const lowLiteracyMode = useAppStore((state) => state.lowLiteracyMode);
+  const setLowLiteracyMode = useAppStore((state) => state.setLowLiteracyMode);
   const [tab, setTab] = useState<AdminTab>('perfil');
 
   return (
@@ -90,6 +92,8 @@ export function AdminScreen({
             onChangeFontScale={setFontScale}
             switchScanningEnabled={switchScanningEnabled}
             onChangeSwitchScanning={setSwitchScanningEnabled}
+            lowLiteracyMode={lowLiteracyMode}
+            onChangeLowLiteracyMode={setLowLiteracyMode}
           />
         ) : tab === 'emergencia' ? (
           <EmergenciaTab

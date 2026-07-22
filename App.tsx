@@ -36,6 +36,7 @@ import { removePushToken } from './src/services/pushTokens';
 import {
   FONT_SCALE_CACHE_KEY,
   type FontScale,
+  LOW_LITERACY_MODE_CACHE_KEY,
   SWITCH_SCANNING_CACHE_KEY,
   useAppStore,
 } from './src/store/useAppStore';
@@ -55,6 +56,7 @@ export default function App() {
   const setShowAdmin = useAppStore((state) => state.setShowAdmin);
   const setFontScale = useAppStore((state) => state.setFontScale);
   const setSwitchScanningEnabled = useAppStore((state) => state.setSwitchScanningEnabled);
+  const setLowLiteracyMode = useAppStore((state) => state.setLowLiteracyMode);
   const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
 
   useEffect(() => {
@@ -64,7 +66,10 @@ export default function App() {
     readCache<boolean>(SWITCH_SCANNING_CACHE_KEY).then((cached) => {
       if (cached) setSwitchScanningEnabled(cached);
     });
-  }, [setFontScale, setSwitchScanningEnabled]);
+    readCache<boolean>(LOW_LITERACY_MODE_CACHE_KEY).then((cached) => {
+      if (cached) setLowLiteracyMode(cached);
+    });
+  }, [setFontScale, setSwitchScanningEnabled, setLowLiteracyMode]);
 
   const [patientNameOverride, setPatientNameOverride] = useState<string | null>(null);
   const patientName = patientNameOverride ?? user?.displayName ?? 'Paciente';

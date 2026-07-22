@@ -9,6 +9,7 @@ export type FontScale = 1 | 1.25 | 1.5;
 
 export const FONT_SCALE_CACHE_KEY = 'falar:fontScale';
 export const SWITCH_SCANNING_CACHE_KEY = 'falar:switchScanning';
+export const LOW_LITERACY_MODE_CACHE_KEY = 'falar:lowLiteracyMode';
 
 interface AppState {
   itemsByCategory: Record<string, CommunicationItem[]>;
@@ -18,6 +19,7 @@ interface AppState {
   showAdmin: boolean;
   fontScale: FontScale;
   switchScanningEnabled: boolean;
+  lowLiteracyMode: boolean;
   setItemsByCategory: (itemsByCategory: Record<string, CommunicationItem[]>) => void;
   setEmergencyContacts: (emergencyContacts: EmergencyContact[]) => void;
   setLastSosAlert: (lastSosAlert: EmergencySosAlert | null) => void;
@@ -25,6 +27,7 @@ interface AppState {
   setShowAdmin: (showAdmin: boolean) => void;
   setFontScale: (fontScale: FontScale) => void;
   setSwitchScanningEnabled: (enabled: boolean) => void;
+  setLowLiteracyMode: (enabled: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -35,6 +38,7 @@ export const useAppStore = create<AppState>((set) => ({
   showAdmin: false,
   fontScale: 1,
   switchScanningEnabled: false,
+  lowLiteracyMode: false,
   setItemsByCategory: (itemsByCategory) => set({ itemsByCategory }),
   setEmergencyContacts: (emergencyContacts) => set({ emergencyContacts }),
   setLastSosAlert: (lastSosAlert) => set({ lastSosAlert }),
@@ -47,5 +51,9 @@ export const useAppStore = create<AppState>((set) => ({
   setSwitchScanningEnabled: (switchScanningEnabled) => {
     set({ switchScanningEnabled });
     writeCache(SWITCH_SCANNING_CACHE_KEY, switchScanningEnabled);
+  },
+  setLowLiteracyMode: (lowLiteracyMode) => {
+    set({ lowLiteracyMode });
+    writeCache(LOW_LITERACY_MODE_CACHE_KEY, lowLiteracyMode);
   },
 }));
