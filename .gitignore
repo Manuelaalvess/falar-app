@@ -41,6 +41,9 @@ GoogleService-Info.plist
 serviceAccountKey.json
 firebase-adminsdk*.json
 
+# credenciais EAS/build
+credentials.json
+
 # typescript
 *.tsbuildinfo
 

@@ -8,9 +8,11 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#F6F3ED",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.manuelaalves.falar"
     },
     "android": {
+      "package": "com.manuelaalves.falar",
       "adaptiveIcon": {
         "backgroundColor": "#F6F3ED",
         "foregroundImage": "./assets/android-icon-foreground.png",
