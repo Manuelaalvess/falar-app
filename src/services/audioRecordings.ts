@@ -25,3 +25,11 @@ export function deleteRecording(itemId: string): void {
   const file = new File(getRecordingsDirectory(), `${itemId}.m4a`);
   if (file.exists) file.delete();
 }
+
+/** Baixa uma gravacao da nuvem e salva no local padrao do item, sobrescrevendo se ja existir. */
+export async function downloadAndSaveRecording(itemId: string, remoteUrl: string): Promise<string> {
+  const destination = new File(getRecordingsDirectory(), `${itemId}.m4a`);
+  if (destination.exists) destination.delete();
+  const downloaded = await File.downloadFileAsync(remoteUrl, destination);
+  return downloaded.uri;
+}
