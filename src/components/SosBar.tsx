@@ -1,8 +1,9 @@
 import { useRef } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
+import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
-import { fonts, fontSizes } from '../theme/typography';
+import { fonts, scaledSize } from '../theme/typography';
 
 const DOUBLE_TAP_WINDOW_MS = 450;
 const SINGLE_TAP_DELAY_MS = DOUBLE_TAP_WINDOW_MS + 50;
@@ -14,6 +15,7 @@ interface SosBarProps {
 }
 
 export function SosBar({ onSinglePress, onDoublePress, busy = false }: SosBarProps) {
+  const fontScale = useAppStore((state) => state.fontScale);
   const lastTapAt = useRef(0);
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -53,19 +55,14 @@ export function SosBar({ onSinglePress, onDoublePress, busy = false }: SosBarPro
       onPress={handlePress}
       disabled={busy}
       accessibilityRole="button"
-      accessibilityLabel="Preciso de ajuda. Um toque para escolher contato. Dois toques rápidos para ligar e enviar localização."
+      accessibilityLabel="Preciso de ajuda. Dois toques rápidos para ligar."
     >
       {busy ? (
-        <ActivityIndicator color="#fff" size="small" />
+        <ActivityIndicator color="#fff" size="large" />
       ) : (
-        <Text style={styles.emoji}>🆘</Text>
+        <Text style={[styles.emoji, { fontSize: scaledSize(44, fontScale) }]}>🆘</Text>
       )}
-      <View style={styles.textBlock}>
-        <Text style={styles.title}>Preciso de ajuda</Text>
-        <Text style={styles.subtitle}>
-          2 toques rápidos: liga e manda localização{'\n'}1 toque: escolher quem chamar
-        </Text>
-      </View>
+      <Text style={[styles.title, { fontSize: scaledSize(22, fontScale) }]}>Preciso de ajuda</Text>
     </Pressable>
   );
 }
@@ -73,35 +70,27 @@ export function SosBar({ onSinglePress, onDoublePress, busy = false }: SosBarPro
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.danger,
-    borderRadius: 20,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
+    borderRadius: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
+    gap: 16,
     marginBottom: 18,
+    minHeight: 96,
+    borderWidth: 3,
+    borderColor: colors.dangerDark,
   },
   containerBusy: {
     opacity: 0.92,
   },
   emoji: {
-    fontSize: 30,
-    width: 36,
-    textAlign: 'center',
-  },
-  textBlock: {
-    flex: 1,
+    fontSize: 44,
   },
   title: {
     fontFamily: fonts.headingBold,
-    fontSize: 17,
+    fontSize: 22,
     color: '#fff',
-  },
-  subtitle: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.bodySmall,
-    color: 'rgba(255, 255, 255, 0.9)',
-    lineHeight: 20,
-    marginTop: 2,
   },
 });

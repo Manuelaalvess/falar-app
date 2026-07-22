@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
 
-import { seedDefaultContactsIfEmpty, subscribeToContacts } from '../services/emergency';
+import {
+  seedDefaultContactsIfEmpty,
+  sosAlertCacheKey,
+  subscribeToContacts,
+  subscribeToLatestSosAlert,
+} from '../services/emergency';
 import { readCache, writeCache } from '../services/localCache';
 import { useAppStore } from '../store/useAppStore';
-import type { EmergencyContact } from '../types/emergency';
+import type { EmergencyContact, EmergencySosAlert } from '../types/emergency';
 
 interface EmergencyContactsState {
   loading: boolean;
@@ -15,11 +20,13 @@ function cacheKeyFor(uid: string): string {
 
 export function useEmergencyContacts(uid: string | null): EmergencyContactsState {
   const setEmergencyContacts = useAppStore((state) => state.setEmergencyContacts);
+  const setLastSosAlert = useAppStore((state) => state.setLastSosAlert);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!uid) {
       setEmergencyContacts([]);
+      setLastSosAlert(null);
       setLoading(true);
       return;
     }
@@ -35,19 +42,33 @@ export function useEmergencyContacts(uid: string | null): EmergencyContactsState
       }
     });
 
+    readCache<EmergencySosAlert>(sosAlertCacheKey(uid)).then((cachedAlert) => {
+      if (cachedAlert) setLastSosAlert(cachedAlert);
+    });
+
     seedDefaultContactsIfEmpty(uid).catch((error: unknown) => {
       console.error('Falha ao popular contatos padrao:', error);
     });
 
-    const unsubscribe = subscribeToContacts(uid, (list) => {
+    const unsubscribeContacts = subscribeToContacts(uid, (list) => {
       receivedLiveData = true;
       setEmergencyContacts(list);
       setLoading(false);
       writeCache(cacheKey, list);
     });
 
-    return unsubscribe;
-  }, [uid, setEmergencyContacts]);
+    const unsubscribeSos = subscribeToLatestSosAlert(uid, (alert) => {
+      if (alert) {
+        setLastSosAlert(alert);
+        writeCache(sosAlertCacheKey(uid), alert);
+      }
+    });
+
+    return () => {
+      unsubscribeContacts();
+      unsubscribeSos();
+    };
+  }, [uid, setEmergencyContacts, setLastSosAlert]);
 
   return { loading };
 }

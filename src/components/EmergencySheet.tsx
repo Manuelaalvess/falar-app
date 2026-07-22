@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 
 import { toE164BR } from '../services/auth';
-import { buildEmergencySmsBody, buildSmsUrl } from '../services/emergencyActions';
+import { buildEmergencySmsBody, buildSmsUrl } from '../services/emergencySms';
 import { getCurrentLocationMapsUrl } from '../services/location';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
