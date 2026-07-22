@@ -2,8 +2,74 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    match /users/{userId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      match /items/{itemId} {
+        allow read, delete: if isOwner();
+        allow create: if isOwner()
+          && request.resource.data.keys().hasOnly(['category', 'name', 'emoji', 'createdAt'])
+          && request.resource.data.category is string
+          && request.resource.data.category.size() > 0
+          && request.resource.data.category.size() <= 40
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 60
+          && request.resource.data.emoji is string
+          && request.resource.data.emoji.size() > 0
+          && request.resource.data.emoji.size() <= 8
+          && request.resource.data.createdAt == request.time;
+        allow update: if false;
+      }
+
+      match /emergencyContacts/{contactId} {
+        allow read, delete: if isOwner();
+        allow create: if isOwner()
+          && request.resource.data.keys().hasOnly(['name', 'relation', 'phone', 'emoji', 'createdAt'])
+          && request.resource.data.name is string
+          && request.resource.data.name.size() > 0
+          && request.resource.data.name.size() <= 60
+          && request.resource.data.relation is string
+          && request.resource.data.relation.size() <= 40
+          && request.resource.data.phone is string
+          && request.resource.data.phone.size() <= 30
+          && request.resource.data.emoji is string
+          && request.resource.data.emoji.size() > 0
+          && request.resource.data.emoji.size() <= 8
+          && request.resource.data.createdAt == request.time;
+        allow update: if false;
+      }
+
+      match /events/{eventId} {
+        allow read: if isOwner();
+        allow create: if isOwner()
+          && request.resource.data.keys().hasOnly(['category', 'categoryLabel', 'itemName', 'timestamp'])
+          && request.resource.data.category is string
+          && request.resource.data.category.size() > 0
+          && request.resource.data.category.size() <= 40
+          && request.resource.data.categoryLabel is string
+          && request.resource.data.categoryLabel.size() <= 60
+          && request.resource.data.itemName is string
+          && request.resource.data.itemName.size() > 0
+          && request.resource.data.itemName.size() <= 60
+          && request.resource.data.timestamp == request.time;
+        allow update, delete: if false;
+      }
+
+      match /emergencyAlerts/{alertId} {
+        allow read: if isOwner();
+        allow create: if isOwner()
+          && request.resource.data.keys().hasOnly(['contactId', 'contactName', 'mapsUrl', 'createdAt'])
+          && request.resource.data.contactId is string
+          && request.resource.data.contactName is string
+          && request.resource.data.contactName.size() <= 60
+          && (request.resource.data.mapsUrl == null
+            || (request.resource.data.mapsUrl is string && request.resource.data.mapsUrl.size() <= 500))
+          && request.resource.data.createdAt == request.time;
+        allow update, delete: if false;
+      }
     }
   }
 }
