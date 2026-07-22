@@ -15,3 +15,7 @@ export const fontSizes = {
   heading: 24,
   headingLarge: 26,
 } as const;
+
+export function scaledSize(base: number, fontScale: number): number {
+  return base * fontScale;
+}

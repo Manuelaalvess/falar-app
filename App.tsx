@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import type { ConfirmationResult } from 'firebase/auth';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import { AdminGateModal } from './src/components/AdminGateModal';
@@ -10,19 +10,25 @@ import {
   type RecaptchaVerifierHandle,
   RecaptchaVerifierModal,
 } from './src/components/RecaptchaVerifierModal';
+import { useAppDataReady } from './src/hooks/useAppDataReady';
 import { useAppFonts } from './src/hooks/useAppFonts';
 import { useAuth } from './src/hooks/useAuth';
 import { useEmergencyContacts } from './src/hooks/useEmergencyContacts';
 import { useEvolutionEvents } from './src/hooks/useEvolutionEvents';
 import { useItems } from './src/hooks/useItems';
+import { usePatientActions } from './src/hooks/usePatientActions';
+import { useVoiceSync } from './src/hooks/useVoiceSync';
 import { AdminScreen } from './src/screens/AdminScreen';
 import { ComunicarScreen } from './src/screens/ComunicarScreen';
 import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
 import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
-import { confirmVerificationCode, sendVerificationCode, signOut } from './src/services/auth';
-import { addContact, removeContact } from './src/services/emergency';
+import {
+  confirmVerificationCode,
+  sendVerificationCode,
+  signOut,
+  updatePatientName,
+} from './src/services/auth';
 import { firebaseConfig } from './src/services/firebase';
-import { addItem, removeItem } from './src/services/items';
 import { readCache } from './src/services/localCache';
 import {
   FONT_SCALE_CACHE_KEY,
@@ -35,9 +41,13 @@ import { colors } from './src/theme/colors';
 export default function App() {
   const [fontsLoaded] = useAppFonts();
   const { user, initializing } = useAuth();
-  useItems(user?.uid ?? null);
-  useEmergencyContacts(user?.uid ?? null);
-  useEvolutionEvents(user?.uid ?? null);
+  const { loading: itemsLoading } = useItems(user?.uid ?? null);
+  const { loading: contactsLoading } = useEmergencyContacts(user?.uid ?? null);
+  const { loading: eventsLoading } = useEvolutionEvents(user?.uid ?? null);
+  const appDataReady = useAppDataReady(itemsLoading, contactsLoading, eventsLoading);
+  useVoiceSync(user?.uid ?? null);
+  const { handleAddItem, handleRemoveItem, handleAddContact, handleRemoveContact } =
+    usePatientActions(user?.uid ?? null);
   const showAdmin = useAppStore((state) => state.showAdmin);
   const setShowAdmin = useAppStore((state) => state.setShowAdmin);
   const setFontScale = useAppStore((state) => state.setFontScale);
@@ -52,6 +62,21 @@ export default function App() {
       if (cached) setSwitchScanningEnabled(cached);
     });
   }, [setFontScale, setSwitchScanningEnabled]);
+
+  const [patientNameOverride, setPatientNameOverride] = useState<string | null>(null);
+  const patientName = patientNameOverride ?? user?.displayName ?? 'Paciente';
+
+  async function handleUpdatePatientName(name: string) {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    try {
+      await updatePatientName(trimmed);
+      setPatientNameOverride(trimmed);
+    } catch (error) {
+      console.error('Falha ao atualizar nome do paciente:', error);
+      Alert.alert('Não foi possível salvar', 'Confira sua conexão e tente novamente.');
+    }
+  }
 
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
   const [pendingName, setPendingName] = useState('');
@@ -96,42 +121,6 @@ export default function App() {
     setErrorMessage(null);
   }
 
-  async function handleAddItem(category: string, name: string, emoji: string) {
-    if (!user) return;
-    try {
-      await addItem(user.uid, category, name, emoji);
-    } catch (error) {
-      console.error('Falha ao adicionar item:', error);
-    }
-  }
-
-  async function handleRemoveItem(itemId: string) {
-    if (!user) return;
-    try {
-      await removeItem(user.uid, itemId);
-    } catch (error) {
-      console.error('Falha ao remover item:', error);
-    }
-  }
-
-  async function handleAddContact(name: string, relation: string, phone: string, emoji: string) {
-    if (!user) return;
-    try {
-      await addContact(user.uid, name, relation, phone, emoji);
-    } catch (error) {
-      console.error('Falha ao adicionar contato:', error);
-    }
-  }
-
-  async function handleRemoveContact(contactId: string) {
-    if (!user) return;
-    try {
-      await removeContact(user.uid, contactId);
-    } catch (error) {
-      console.error('Falha ao remover contato:', error);
-    }
-  }
-
   if (!fontsLoaded || initializing) {
     return (
       <SafeAreaProvider>
@@ -150,10 +139,15 @@ export default function App() {
           cancelLabel="Cancelar"
         />
         {user ? (
-          showAdmin ? (
+          !appDataReady ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator color={colors.primary} size="large" />
+            </View>
+          ) : showAdmin ? (
             <AdminScreen
               uid={user.uid}
-              patientName={user.displayName ?? 'Paciente'}
+              patientName={patientName}
+              onUpdatePatientName={handleUpdatePatientName}
               onAddItem={handleAddItem}
               onRemoveItem={handleRemoveItem}
               onAddContact={handleAddContact}
@@ -201,5 +195,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

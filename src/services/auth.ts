@@ -35,6 +35,11 @@ export async function confirmVerificationCode(
   return credential.user;
 }
 
+export async function updatePatientName(displayName: string): Promise<void> {
+  if (!auth.currentUser) return;
+  await updateProfile(auth.currentUser, { displayName });
+}
+
 export function onAuthStateChanged(callback: (user: User | null) => void): () => void {
   return firebaseOnAuthStateChanged(auth, callback);
 }

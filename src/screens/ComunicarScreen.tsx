@@ -14,7 +14,7 @@ import { playSound } from '../services/recording';
 import { speak } from '../services/speech';
 import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
-import { fonts, fontSizes } from '../theme/typography';
+import { fonts, fontSizes, scaledSize } from '../theme/typography';
 import type { CommunicationItem } from '../types/communication';
 import { getSuggestedCategory, sortItemsByUsage } from '../utils/personalization';
 
@@ -106,13 +106,8 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
 
     setSosBusy(true);
     try {
-      const { locationOk } = await triggerDoubleTapEmergency(primary);
-      if (!locationOk) {
-        Alert.alert(
-          'Localização indisponível',
-          `Ligação para ${primary.name} iniciada e SMS aberto. Se aparecer a tela de mensagens, toque em Enviar. A localização não entrou no texto — peça ajuda por voz.`,
-        );
-      }
+      speak('Ligando para ajuda');
+      await triggerDoubleTapEmergency(uid, primary);
     } catch (error) {
       console.error('Falha ao acionar emergencia por duplo toque:', error);
       Alert.alert(
@@ -138,7 +133,11 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
         />
         {!openCategory ? (
           <>
-            <Text style={styles.sectionLabel}>O que você quer dizer?</Text>
+            <Text
+              style={[styles.sectionLabel, { fontSize: scaledSize(fontSizes.label, fontScale) }]}
+            >
+              O que você quer dizer?
+            </Text>
             <View style={styles.grid}>
               {CATEGORIES.map((category, index) => {
                 const categoryColors = CATEGORY_COLORS[category.key];
@@ -184,7 +183,12 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
               >
                 <Text style={[styles.backButtonLabel, { fontSize: 22 * fontScale }]}>←</Text>
               </Pressable>
-              <Text style={styles.sectionLabelInline}>
+              <Text
+                style={[
+                  styles.sectionLabelInline,
+                  { fontSize: scaledSize(fontSizes.label, fontScale) },
+                ]}
+              >
                 {openCategory.emoji} {openCategory.label}
               </Text>
             </View>
@@ -213,7 +217,9 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
                 })}
               </View>
             ) : (
-              <Text style={styles.emptyText}>
+              <Text
+                style={[styles.emptyText, { fontSize: scaledSize(fontSizes.bodyLarge, fontScale) }]}
+              >
                 Nenhum item ainda aqui.{'\n'}Peça para a família adicionar na Área da família.
               </Text>
             )}
@@ -223,7 +229,9 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
 
       {switchScanningEnabled ? (
         <Pressable style={styles.scanSelectButton} onPress={handleScanSelect}>
-          <Text style={styles.scanSelectButtonLabel}>✅ Selecionar</Text>
+          <Text style={[styles.scanSelectButtonLabel, { fontSize: scaledSize(20, fontScale) }]}>
+            ✅ Selecionar
+          </Text>
         </Pressable>
       ) : null}
 

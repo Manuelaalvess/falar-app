@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { AdminGateModal } from '../components/AdminGateModal';
 import { VoiceRecorderModal } from '../components/VoiceRecorderModal';
@@ -12,6 +12,7 @@ import {
   setBiometricPreference,
 } from '../services/adminSecurity';
 import { deleteRecording, getRecordingUri, saveRecording } from '../services/audioRecordings';
+import { deleteRecordingFromCloud, uploadRecording } from '../services/voiceStorage';
 import { type FontScale, useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
@@ -36,6 +37,7 @@ type AdminTab = 'perfil' | 'emergencia' | 'evolucao';
 interface AdminScreenProps {
   uid: string;
   patientName: string;
+  onUpdatePatientName: (name: string) => void;
   onAddItem: (category: string, name: string, emoji: string) => void;
   onRemoveItem: (itemId: string) => void;
   onAddContact: (name: string, relation: string, phone: string, emoji: string) => void;
@@ -47,6 +49,7 @@ interface AdminScreenProps {
 export function AdminScreen({
   uid,
   patientName,
+  onUpdatePatientName,
   onAddItem,
   onRemoveItem,
   onAddContact,
@@ -102,6 +105,8 @@ export function AdminScreen({
       <ScrollView contentContainerStyle={styles.body}>
         {tab === 'perfil' ? (
           <>
+            <Text style={styles.sectionLabel}>Nome do paciente</Text>
+            <PatientNameBlock patientName={patientName} onUpdatePatientName={onUpdatePatientName} />
             <Text style={styles.sectionLabel}>Segurança</Text>
             <SecurityBlock uid={uid} />
             <Text style={styles.sectionLabel}>Acessibilidade</Text>
@@ -112,9 +117,14 @@ export function AdminScreen({
               onChangeSwitchScanning={setSwitchScanningEnabled}
             />
             <Text style={styles.sectionLabel}>Personalize as categorias que o paciente usa</Text>
+            <Text style={styles.hintText}>
+              As gravações de voz ficam salvas na conta e são sincronizadas em outros aparelhos
+              conectados a ela.
+            </Text>
             {CATEGORIES.map((category) => (
               <CategoryBlock
                 key={category.key}
+                uid={uid}
                 category={category}
                 items={itemsByCategory[category.key] ?? []}
                 onAddItem={onAddItem}
@@ -135,6 +145,32 @@ export function AdminScreen({
           <Text style={styles.signOutLabel}>Sair da conta</Text>
         </Pressable>
       </ScrollView>
+    </View>
+  );
+}
+
+interface PatientNameBlockProps {
+  patientName: string;
+  onUpdatePatientName: (name: string) => void;
+}
+
+function PatientNameBlock({ patientName, onUpdatePatientName }: PatientNameBlockProps) {
+  const [name, setName] = useState(patientName);
+
+  return (
+    <View style={styles.block}>
+      <View style={styles.addRow}>
+        <TextInput
+          style={styles.input}
+          placeholder="Nome do paciente"
+          placeholderTextColor={colors.muted}
+          value={name}
+          onChangeText={setName}
+        />
+        <Pressable style={styles.addButton} onPress={() => onUpdatePatientName(name)}>
+          <Text style={styles.addButtonLabel}>Salvar</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -295,13 +331,14 @@ function AccessibilityBlock({
 }
 
 interface CategoryBlockProps {
+  uid: string;
   category: CommunicationCategory;
   items: CommunicationItem[];
   onAddItem: (category: string, name: string, emoji: string) => void;
   onRemoveItem: (itemId: string) => void;
 }
 
-function CategoryBlock({ category, items, onAddItem, onRemoveItem }: CategoryBlockProps) {
+function CategoryBlock({ uid, category, items, onAddItem, onRemoveItem }: CategoryBlockProps) {
   const {
     control,
     handleSubmit,
@@ -316,14 +353,20 @@ function CategoryBlock({ category, items, onAddItem, onRemoveItem }: CategoryBlo
 
   function handleSaveRecording(temporaryUri: string) {
     if (!activeRecordingItem) return;
-    saveRecording(activeRecordingItem.id, temporaryUri);
+    const itemId = activeRecordingItem.id;
+    const savedUri = saveRecording(itemId, temporaryUri);
     bumpRecordingsVersion((version) => version + 1);
+    uploadRecording(uid, itemId, savedUri).catch((error: unknown) => {
+      console.error('Falha ao enviar gravacao para a nuvem:', error);
+    });
   }
 
   function handleDeleteRecording() {
     if (!activeRecordingItem) return;
-    deleteRecording(activeRecordingItem.id);
+    const itemId = activeRecordingItem.id;
+    deleteRecording(itemId);
     bumpRecordingsVersion((version) => version + 1);
+    void deleteRecordingFromCloud(uid, itemId);
   }
 
   function onSubmit(values: ItemFormValues) {
@@ -413,6 +456,7 @@ interface EmergenciaTabProps {
 }
 
 function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: EmergenciaTabProps) {
+  const lastSosAlert = useAppStore((state) => state.lastSosAlert);
   const {
     control,
     handleSubmit,
@@ -437,9 +481,26 @@ function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: EmergenciaTa
     <View>
       <Text style={styles.sectionLabel}>Contatos que aparecem no botão 🆘</Text>
       <Text style={styles.hintText}>
-        Com 2 toques rápidos no botão vermelho, o app liga e abre SMS com localização para o
-        primeiro contato da lista abaixo que tiver telefone.
+        Ensine o paciente: 2 toques rápidos no botão vermelho ligam para o primeiro contato com
+        telefone (lista abaixo). A localização fica registrada em &ldquo;Último SOS&rdquo; — com
+        internet, aparece também no celular de outro familiar logado na mesma conta. 1 toque abre a
+        lista para escolher contato ou enviar SMS manualmente.
       </Text>
+      {lastSosAlert ? (
+        <View style={[styles.block, styles.sosAlertBlock]}>
+          <Text style={styles.blockTitle}>Último SOS (2 toques)</Text>
+          <Text style={styles.sosAlertMeta}>
+            {new Date(lastSosAlert.timestamp).toLocaleString('pt-BR')} — {lastSosAlert.contactName}
+          </Text>
+          {lastSosAlert.mapsUrl ? (
+            <Text style={styles.sosAlertLink} selectable>
+              {lastSosAlert.mapsUrl}
+            </Text>
+          ) : (
+            <Text style={styles.emptyLabel}>Sem localização GPS neste acionamento.</Text>
+          )}
+        </View>
+      ) : null}
       <View style={styles.block}>
         {contacts.length > 0 ? (
           contacts.map((contact) => (
@@ -548,6 +609,12 @@ function EvolucaoTab({ patientName, events }: EvolucaoTabProps) {
   const recent = getRecentEvents(events, 8);
   const report = buildTherapistReport(patientName, events);
 
+  function handleShareReport() {
+    Share.share({ message: report }).catch((error: unknown) => {
+      console.error('Falha ao compartilhar resumo:', error);
+    });
+  }
+
   return (
     <View>
       <Text style={styles.sectionLabel}>Resumo</Text>
@@ -580,6 +647,9 @@ function EvolucaoTab({ patientName, events }: EvolucaoTabProps) {
         <Text style={styles.reportText} selectable>
           {report}
         </Text>
+        <Pressable style={styles.addContactButton} onPress={handleShareReport}>
+          <Text style={styles.addButtonLabel}>Compartilhar resumo</Text>
+        </Pressable>
         <View style={styles.recentList}>
           {recent.length > 0 ? (
             recent.map((event) => (
@@ -683,6 +753,22 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 12,
     marginTop: -6,
+  },
+  sosAlertBlock: {
+    borderColor: colors.danger,
+    borderWidth: 2,
+  },
+  sosAlertMeta: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.bodySmall,
+    color: colors.ink,
+    marginBottom: 8,
+  },
+  sosAlertLink: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.primaryDark,
+    lineHeight: 20,
   },
   block: {
     backgroundColor: colors.card,
