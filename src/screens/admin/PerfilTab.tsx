@@ -63,7 +63,7 @@ function SecurityBlock({ uid }: SecurityBlockProps) {
   return (
     <View style={styles.block}>
       <Text style={styles.blockTitle}>PIN de acesso</Text>
-      <Text style={styles.switchScanningDescription}>
+      <Text style={styles.blockHintText}>
         Protege a Área da família para o paciente não entrar por engano.
       </Text>
       <Pressable style={styles.addContactButton} onPress={() => setShowChangePin(true)}>
@@ -72,7 +72,7 @@ function SecurityBlock({ uid }: SecurityBlockProps) {
 
       {biometricAvailable ? (
         <>
-          <Text style={styles.switchScanningTitle}>Usar biometria</Text>
+          <Text style={styles.blockHintTitle}>Usar biometria</Text>
           <View style={styles.fontScaleRow}>
             <Pressable
               style={[styles.fontScaleButton, !biometricEnabled && styles.fontScaleButtonActive]}
@@ -124,8 +124,6 @@ interface PerfilTabProps {
   onRemoveItem: (itemId: string) => void;
   fontScale: FontScale;
   onChangeFontScale: (scale: FontScale) => void;
-  switchScanningEnabled: boolean;
-  onChangeSwitchScanning: (enabled: boolean) => void;
   lowLiteracyMode: boolean;
   onChangeLowLiteracyMode: (enabled: boolean) => void;
 }
@@ -139,8 +137,6 @@ export function PerfilTab({
   onRemoveItem,
   fontScale,
   onChangeFontScale,
-  switchScanningEnabled,
-  onChangeSwitchScanning,
   lowLiteracyMode,
   onChangeLowLiteracyMode,
 }: PerfilTabProps) {
@@ -154,8 +150,6 @@ export function PerfilTab({
       <AccessibilityBlock
         fontScale={fontScale}
         onChangeFontScale={onChangeFontScale}
-        switchScanningEnabled={switchScanningEnabled}
-        onChangeSwitchScanning={onChangeSwitchScanning}
         lowLiteracyMode={lowLiteracyMode}
         onChangeLowLiteracyMode={onChangeLowLiteracyMode}
       />

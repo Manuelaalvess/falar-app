@@ -1,31 +1,23 @@
-import { useEffect, useState } from 'react';
-
 import { subscribeToEvents } from '../services/evolution';
 import { useAppStore } from '../store/useAppStore';
+import { useCachedFirestoreSubscription } from './useCachedFirestoreSubscription';
 
 interface EvolutionEventsState {
   loading: boolean;
 }
 
+function eventsCacheKey(uid: string): string {
+  return `falar:events:${uid}`;
+}
+
 export function useEvolutionEvents(uid: string | null): EvolutionEventsState {
   const setEvents = useAppStore((state) => state.setEvents);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!uid) {
-      setEvents([]);
-      setLoading(true);
-      return;
-    }
-
-    setLoading(true);
-    const unsubscribe = subscribeToEvents(uid, (events) => {
-      setEvents(events);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, [uid, setEvents]);
-
-  return { loading };
+  return useCachedFirestoreSubscription({
+    uid,
+    cacheKey: eventsCacheKey,
+    subscribe: subscribeToEvents,
+    onUpdate: setEvents,
+    onClear: () => setEvents([]),
+  });
 }

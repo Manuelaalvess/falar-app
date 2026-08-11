@@ -1,75 +1,60 @@
 import { StatusBar } from 'expo-status-bar';
-import type { ConfirmationResult } from 'firebase/auth';
+import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
-import { AdminGateModal } from './src/components/AdminGateModal';
+import { AuthenticatedApp } from './src/components/AuthenticatedApp';
 import { AppErrorBoundary } from './src/components/AppErrorBoundary';
-import { AppHeader } from './src/components/AppHeader';
 import {
   type RecaptchaVerifierHandle,
   RecaptchaVerifierModal,
 } from './src/components/RecaptchaVerifierModal';
-import { useAppDataReady } from './src/hooks/useAppDataReady';
+import { useAccessibilityPrefsCache } from './src/hooks/useAccessibilityPrefsCache';
 import { useAppFonts } from './src/hooks/useAppFonts';
 import { useAuth } from './src/hooks/useAuth';
 import { useEmergencyContacts } from './src/hooks/useEmergencyContacts';
 import { useEvolutionEvents } from './src/hooks/useEvolutionEvents';
 import { useItems } from './src/hooks/useItems';
 import { usePatientActions } from './src/hooks/usePatientActions';
+import { usePhoneLoginFlow } from './src/hooks/usePhoneLoginFlow';
 import { usePushRegistration } from './src/hooks/usePushRegistration';
-import { AdminScreen } from './src/screens/admin/AdminScreen';
-import { ComunicarScreen } from './src/screens/ComunicarScreen';
-import { type LoginFormData, LoginScreen } from './src/screens/LoginScreen';
+import { LoginScreen } from './src/screens/LoginScreen';
 import { VerifyCodeScreen } from './src/screens/VerifyCodeScreen';
-import {
-  confirmVerificationCode,
-  sendVerificationCode,
-  signOut,
-  updatePatientName,
-} from './src/services/auth';
+import { signOut, updatePatientName } from './src/services/auth';
 import { getDeviceId } from './src/services/deviceId';
 import { firebaseConfig } from './src/services/firebase';
-import { readCache } from './src/services/localCache';
 import { removePushToken } from './src/services/pushTokens';
-import {
-  FONT_SCALE_CACHE_KEY,
-  type FontScale,
-  LOW_LITERACY_MODE_CACHE_KEY,
-  SWITCH_SCANNING_CACHE_KEY,
-  useAppStore,
-} from './src/store/useAppStore';
 import { colors } from './src/theme/colors';
+import { logError } from './src/utils/logError';
+
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Expo Go ou ambiente sem splash nativo.
+});
 
 export default function App() {
   const [fontsLoaded] = useAppFonts();
   const { user, initializing } = useAuth();
   const { loading: itemsLoading } = useItems(user?.uid ?? null);
   const { loading: contactsLoading } = useEmergencyContacts(user?.uid ?? null);
-  const { loading: eventsLoading } = useEvolutionEvents(user?.uid ?? null);
-  const appDataReady = useAppDataReady(itemsLoading, contactsLoading, eventsLoading);
-  usePushRegistration(user?.uid ?? null);
-  const { handleAddItem, handleRemoveItem, handleAddContact, handleRemoveContact } =
-    usePatientActions(user?.uid ?? null);
-  const showAdmin = useAppStore((state) => state.showAdmin);
-  const setShowAdmin = useAppStore((state) => state.setShowAdmin);
-  const setFontScale = useAppStore((state) => state.setFontScale);
-  const setSwitchScanningEnabled = useAppStore((state) => state.setSwitchScanningEnabled);
-  const setLowLiteracyMode = useAppStore((state) => state.setLowLiteracyMode);
-  const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
+  useEvolutionEvents(user?.uid ?? null);
+  const comunicarReady = !itemsLoading && !contactsLoading;
 
   useEffect(() => {
-    readCache<FontScale>(FONT_SCALE_CACHE_KEY).then((cached) => {
-      if (cached) setFontScale(cached);
-    });
-    readCache<boolean>(SWITCH_SCANNING_CACHE_KEY).then((cached) => {
-      if (cached) setSwitchScanningEnabled(cached);
-    });
-    readCache<boolean>(LOW_LITERACY_MODE_CACHE_KEY).then((cached) => {
-      if (cached) setLowLiteracyMode(cached);
-    });
-  }, [setFontScale, setSwitchScanningEnabled, setLowLiteracyMode]);
+    if (!fontsLoaded || initializing) return;
+    if (!user || comunicarReady) {
+      SplashScreen.hideAsync().catch(() => undefined);
+    }
+  }, [fontsLoaded, initializing, user, comunicarReady]);
+
+  usePushRegistration(user?.uid ?? null);
+  useAccessibilityPrefsCache();
+
+  const { handleAddItem, handleRemoveItem, handleAddContact, handleRemoveContact } =
+    usePatientActions(user?.uid ?? null);
+
+  const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
+  const loginFlow = usePhoneLoginFlow(recaptchaVerifier);
 
   const [patientNameOverride, setPatientNameOverride] = useState<string | null>(null);
   const patientName = patientNameOverride ?? user?.displayName ?? 'Paciente';
@@ -81,59 +66,16 @@ export default function App() {
       await updatePatientName(trimmed);
       setPatientNameOverride(trimmed);
     } catch (error) {
-      console.error('Falha ao atualizar nome do paciente:', error);
+      logError('Nome do paciente', error);
       Alert.alert('Não foi possível salvar', 'Confira sua conexão e tente novamente.');
     }
-  }
-
-  const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
-  const [pendingName, setPendingName] = useState('');
-  const [pendingPhone, setPendingPhone] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showAdminGate, setShowAdminGate] = useState(false);
-
-  async function handleLoginSubmit({ name, phone }: LoginFormData) {
-    if (!recaptchaVerifier.current) return;
-    setIsSubmitting(true);
-    setErrorMessage(null);
-    try {
-      const result = await sendVerificationCode(phone, recaptchaVerifier.current);
-      setConfirmation(result);
-      setPendingName(name);
-      setPendingPhone(phone);
-    } catch (error) {
-      console.error('Falha ao enviar codigo de verificacao:', error);
-      setErrorMessage('Não foi possível enviar o código. Confira o número e tente novamente.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleConfirmCode(code: string) {
-    if (!confirmation) return;
-    setIsSubmitting(true);
-    setErrorMessage(null);
-    try {
-      await confirmVerificationCode(confirmation, code, pendingName);
-    } catch (error) {
-      console.error('Falha ao confirmar codigo:', error);
-      setErrorMessage('Código incorreto. Tente novamente.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  function handleBackToLogin() {
-    setConfirmation(null);
-    setErrorMessage(null);
   }
 
   async function handleSignOut() {
     if (user) {
       const deviceId = await getDeviceId();
       await removePushToken(user.uid, deviceId).catch((error: unknown) => {
-        console.error('Falha ao remover token de push:', error);
+        logError('Remoção do token push', error);
       });
     }
     await signOut();
@@ -158,50 +100,30 @@ export default function App() {
             cancelLabel="Cancelar"
           />
           {user ? (
-            !appDataReady ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color={colors.primary} size="large" />
-              </View>
-            ) : showAdmin ? (
-              <AdminScreen
-                uid={user.uid}
-                patientName={patientName}
-                onUpdatePatientName={handleUpdatePatientName}
-                onAddItem={handleAddItem}
-                onRemoveItem={handleRemoveItem}
-                onAddContact={handleAddContact}
-                onRemoveContact={handleRemoveContact}
-                onClose={() => setShowAdmin(false)}
-                onSignOut={handleSignOut}
-              />
-            ) : (
-              <>
-                <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdminGate(true)} />
-                <ComunicarScreen uid={user.uid} />
-                <AdminGateModal
-                  visible={showAdminGate}
-                  uid={user.uid}
-                  onSuccess={() => {
-                    setShowAdminGate(false);
-                    setShowAdmin(true);
-                  }}
-                  onCancel={() => setShowAdminGate(false)}
-                />
-              </>
-            )
-          ) : confirmation ? (
+            <AuthenticatedApp
+              user={user}
+              patientName={patientName}
+              comunicarReady={comunicarReady}
+              onUpdatePatientName={handleUpdatePatientName}
+              onAddItem={handleAddItem}
+              onRemoveItem={handleRemoveItem}
+              onAddContact={handleAddContact}
+              onRemoveContact={handleRemoveContact}
+              onSignOut={handleSignOut}
+            />
+          ) : loginFlow.confirmation ? (
             <VerifyCodeScreen
-              phone={pendingPhone}
-              onConfirm={handleConfirmCode}
-              onBack={handleBackToLogin}
-              isSubmitting={isSubmitting}
-              errorMessage={errorMessage}
+              phone={loginFlow.pendingPhone}
+              onConfirm={loginFlow.handleConfirmCode}
+              onBack={loginFlow.handleBackToLogin}
+              isSubmitting={loginFlow.isSubmitting}
+              errorMessage={loginFlow.errorMessage}
             />
           ) : (
             <LoginScreen
-              onSubmit={handleLoginSubmit}
-              isSubmitting={isSubmitting}
-              errorMessage={errorMessage}
+              onSubmit={loginFlow.handleLoginSubmit}
+              isSubmitting={loginFlow.isSubmitting}
+              errorMessage={loginFlow.errorMessage}
             />
           )}
           <StatusBar style="dark" />
@@ -215,10 +137,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

@@ -37,8 +37,6 @@ export function AdminScreen({
   const events = useAppStore((state) => state.events);
   const fontScale = useAppStore((state) => state.fontScale);
   const setFontScale = useAppStore((state) => state.setFontScale);
-  const switchScanningEnabled = useAppStore((state) => state.switchScanningEnabled);
-  const setSwitchScanningEnabled = useAppStore((state) => state.setSwitchScanningEnabled);
   const lowLiteracyMode = useAppStore((state) => state.lowLiteracyMode);
   const setLowLiteracyMode = useAppStore((state) => state.setLowLiteracyMode);
   const [tab, setTab] = useState<AdminTab>('perfil');
@@ -56,7 +54,12 @@ export function AdminScreen({
           style={[styles.tabButton, tab === 'perfil' && styles.tabButtonActive]}
           onPress={() => setTab('perfil')}
         >
-          <Text style={[styles.tabButtonLabel, tab === 'perfil' && styles.tabButtonLabelActive]}>
+          <Text
+            style={[styles.tabButtonLabel, tab === 'perfil' && styles.tabButtonLabelActive]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
             Perfil
           </Text>
         </Pressable>
@@ -66,6 +69,9 @@ export function AdminScreen({
         >
           <Text
             style={[styles.tabButtonLabel, tab === 'emergencia' && styles.tabButtonLabelActive]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
           >
             Emergência
           </Text>
@@ -74,7 +80,12 @@ export function AdminScreen({
           style={[styles.tabButton, tab === 'evolucao' && styles.tabButtonActive]}
           onPress={() => setTab('evolucao')}
         >
-          <Text style={[styles.tabButtonLabel, tab === 'evolucao' && styles.tabButtonLabelActive]}>
+          <Text
+            style={[styles.tabButtonLabel, tab === 'evolucao' && styles.tabButtonLabelActive]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.8}
+          >
             Evolução
           </Text>
         </Pressable>
@@ -90,8 +101,6 @@ export function AdminScreen({
             onRemoveItem={onRemoveItem}
             fontScale={fontScale}
             onChangeFontScale={setFontScale}
-            switchScanningEnabled={switchScanningEnabled}
-            onChangeSwitchScanning={setSwitchScanningEnabled}
             lowLiteracyMode={lowLiteracyMode}
             onChangeLowLiteracyMode={setLowLiteracyMode}
           />

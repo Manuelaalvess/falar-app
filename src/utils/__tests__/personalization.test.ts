@@ -1,4 +1,4 @@
-import { getSuggestedCategory, getTimeOfDayBucket, sortItemsByUsage } from '../personalization';
+import { sortItemsByUsage } from '../personalization';
 import type { CommunicationItem } from '../../types/communication';
 import type { CommunicationEvent } from '../../types/evolution';
 
@@ -12,15 +12,6 @@ function makeEvent(overrides: Partial<CommunicationEvent> = {}): CommunicationEv
     ...overrides,
   };
 }
-
-describe('getTimeOfDayBucket', () => {
-  it('classifica madrugada, manha, tarde e noite corretamente', () => {
-    expect(getTimeOfDayBucket(new Date(2024, 0, 1, 3))).toBe('madrugada');
-    expect(getTimeOfDayBucket(new Date(2024, 0, 1, 9))).toBe('manha');
-    expect(getTimeOfDayBucket(new Date(2024, 0, 1, 15))).toBe('tarde');
-    expect(getTimeOfDayBucket(new Date(2024, 0, 1, 21))).toBe('noite');
-  });
-});
 
 describe('sortItemsByUsage', () => {
   const items: CommunicationItem[] = [
@@ -45,22 +36,5 @@ describe('sortItemsByUsage', () => {
 
     const sorted = sortItemsByUsage(items, events, 'preciso');
     expect(sorted.map((item) => item.name)).toEqual(['Água', 'Comida', 'Banheiro']);
-  });
-});
-
-describe('getSuggestedCategory', () => {
-  it('retorna null quando nao ha eventos suficientes no periodo atual', () => {
-    const events: CommunicationEvent[] = [makeEvent()];
-    expect(getSuggestedCategory(events)).toBeNull();
-  });
-
-  it('sugere a categoria mais usada no periodo atual quando ha eventos suficientes', () => {
-    const now = Date.now();
-    const events: CommunicationEvent[] = [
-      makeEvent({ category: 'comidas', timestamp: now }),
-      makeEvent({ category: 'comidas', timestamp: now }),
-      makeEvent({ category: 'comidas', timestamp: now }),
-    ];
-    expect(getSuggestedCategory(events)).toBe('comidas');
   });
 });

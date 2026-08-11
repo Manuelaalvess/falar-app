@@ -8,6 +8,7 @@ import { EMOJI_CHOICES } from '../../constants/communication';
 import { deleteRecording, getRecordingUri, saveRecording } from '../../services/audioRecordings';
 import { colors } from '../../theme/colors';
 import type { CommunicationCategory, CommunicationItem } from '../../types/communication';
+import { confirmDestructive } from '../../utils/confirmDestructive';
 import { type ItemFormValues, itemFormSchema } from '../../validation/adminForms';
 import { styles } from './adminStyles';
 
@@ -61,7 +62,13 @@ export function CategoryBlock({ category, items, onAddItem, onRemoveItem }: Cate
             <Pressable style={styles.photoButton} onPress={() => setActiveRecordingItem(item)}>
               <Text style={styles.photoButtonLabel}>{getRecordingUri(item.id) ? '🔊' : '🎤'}</Text>
             </Pressable>
-            <Pressable onPress={() => onRemoveItem(item.id)}>
+            <Pressable
+              onPress={() =>
+                confirmDestructive('Remover item', `Remover "${item.name}"?`, () =>
+                  onRemoveItem(item.id),
+                )
+              }
+            >
               <Text style={styles.deleteLabel}>✕</Text>
             </Pressable>
           </View>

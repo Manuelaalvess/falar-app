@@ -8,6 +8,8 @@ import {
   startRecording,
   stopRecording,
 } from '../services/recording';
+import { confirmDestructive } from '../utils/confirmDestructive';
+import { logError } from '../utils/logError';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 
@@ -57,7 +59,7 @@ export function VoiceRecorderModal({
       setActiveRecording(recording);
       setIsRecording(true);
     } catch (error) {
-      console.error('Falha ao iniciar gravacao:', error);
+      logError('Gravação', error);
       Alert.alert('Não foi possível gravar', 'Tente novamente.');
     }
   }
@@ -68,7 +70,7 @@ export function VoiceRecorderModal({
       const uri = await stopRecording(activeRecording);
       setPreviewUri(uri);
     } catch (error) {
-      console.error('Falha ao parar gravacao:', error);
+      logError('Parar gravação', error);
       Alert.alert('Não foi possível concluir a gravação', 'Tente novamente.');
     } finally {
       setIsRecording(false);
@@ -81,7 +83,7 @@ export function VoiceRecorderModal({
     try {
       await playSound(previewUri);
     } catch (error) {
-      console.error('Falha ao reproduzir gravacao:', error);
+      logError('Ouvir gravação', error);
     }
   }
 
@@ -93,16 +95,25 @@ export function VoiceRecorderModal({
   }
 
   function handleDelete() {
-    onDeleteRecording();
-    reset();
-    onClose();
+    confirmDestructive(
+      'Remover gravação',
+      `Apagar a gravação de "${itemName}" neste aparelho?`,
+      () => {
+        onDeleteRecording();
+        reset();
+        onClose();
+      },
+    );
   }
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={handleClose}>
       <View style={styles.overlay}>
         <View style={styles.sheet}>
-          <Text style={styles.title}>🎤 Voz para &ldquo;{itemName}&rdquo;</Text>
+          <Text style={styles.title}>{`🎤 Voz para "${itemName}"`}</Text>
+          <Text style={styles.hint}>
+            A gravação fica só neste aparelho. Para tocar no celular do paciente, grave lá também.
+          </Text>
 
           {previewUri ? (
             <>
@@ -127,8 +138,7 @@ export function VoiceRecorderModal({
           ) : (
             <>
               <Text style={styles.description}>
-                Grave a voz de um familiar dizendo &ldquo;{itemName}&rdquo; para tocar no lugar da
-                voz sintética.
+                {`Grave a voz de um familiar dizendo "${itemName}" para tocar no lugar da voz sintética.`}
               </Text>
               <Pressable style={styles.primaryButton} onPress={handleStartRecording}>
                 <Text style={styles.primaryButtonLabel}>🎤 Gravar</Text>
@@ -168,6 +178,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.headingBold,
     fontSize: 20,
     color: colors.primaryDark,
+  },
+  hint: {
+    fontFamily: fonts.body,
+    fontSize: 13,
+    color: colors.accent,
+    lineHeight: 19,
   },
   description: {
     fontFamily: fonts.body,

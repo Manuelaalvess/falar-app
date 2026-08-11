@@ -51,18 +51,23 @@ export function SosBar({ onSinglePress, onDoublePress, busy = false }: SosBarPro
 
   return (
     <Pressable
-      style={[styles.container, busy && styles.containerBusy]}
+      style={({ pressed }) => [
+        styles.container,
+        busy && styles.containerBusy,
+        pressed && !busy && styles.containerPressed,
+      ]}
       onPress={handlePress}
       disabled={busy}
       accessibilityRole="button"
-      accessibilityLabel="Preciso de ajuda. Dois toques rápidos para ligar."
+      accessibilityLabel="Preciso de ajuda"
+      accessibilityHint="Um toque abre contatos. Dois toques rápidos ligam para emergência."
     >
       {busy ? (
         <ActivityIndicator color="#fff" size="large" />
       ) : (
         <Text style={[styles.emoji, { fontSize: scaledSize(44, fontScale) }]}>🆘</Text>
       )}
-      <Text style={[styles.title, { fontSize: scaledSize(22, fontScale) }]}>Preciso de ajuda</Text>
+      <Text style={[styles.title, { fontSize: scaledSize(24, fontScale) }]}>Preciso de ajuda</Text>
     </Pressable>
   );
 }
@@ -85,12 +90,16 @@ const styles = StyleSheet.create({
   containerBusy: {
     opacity: 0.92,
   },
+  containerPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.99 }],
+  },
   emoji: {
     fontSize: 44,
   },
   title: {
     fontFamily: fonts.headingBold,
-    fontSize: 22,
+    fontSize: 24,
     color: '#fff',
   },
 });

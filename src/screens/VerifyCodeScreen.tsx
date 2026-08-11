@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 
 import { colors } from '../theme/colors';
-import { fonts, fontSizes } from '../theme/typography';
+import { fonts } from '../theme/typography';
+import { authScreenStyles as styles } from './authScreenStyles';
 
 interface VerifyCodeScreenProps {
   phone: string;
@@ -48,7 +49,7 @@ export function VerifyCodeScreen({
 
       <View style={styles.form}>
         <TextInput
-          style={styles.input}
+          style={localStyles.codeInput}
           placeholder="000000"
           placeholderTextColor={colors.muted}
           value={code}
@@ -77,40 +78,8 @@ export function VerifyCodeScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  icon: {
-    fontSize: 60,
-    marginBottom: 16,
-  },
-  title: {
-    fontFamily: fonts.heading,
-    fontSize: fontSizes.heading,
-    color: colors.primaryDark,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.bodySmall,
-    color: colors.muted,
-    textAlign: 'center',
-    lineHeight: 22,
-    maxWidth: 320,
-    marginBottom: 22,
-  },
-  form: {
-    width: '100%',
-    maxWidth: 320,
-    gap: 12,
-  },
-  input: {
+const localStyles = StyleSheet.create({
+  codeInput: {
     fontFamily: fonts.heading,
     fontSize: 28,
     letterSpacing: 8,
@@ -120,33 +89,5 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.card,
     color: colors.ink,
-  },
-  error: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.bodySmall,
-    color: colors.danger,
-  },
-  button: {
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
-  buttonLabel: {
-    fontFamily: fonts.heading,
-    fontSize: 17,
-    color: '#fff',
-  },
-  backLink: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.bodySmall,
-    color: colors.muted,
-    textAlign: 'center',
-    marginTop: 4,
-    textDecorationLine: 'underline',
   },
 });

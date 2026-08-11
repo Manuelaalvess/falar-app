@@ -1,6 +1,5 @@
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
-/** Envia direto para a API de push da Expo — sem servidor/Cloud Functions. */
 export async function sendPushNotifications(
   tokens: string[],
   title: string,

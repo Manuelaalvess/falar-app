@@ -6,6 +6,7 @@ import { EMOJI_CHOICES } from '../../constants/communication';
 import { useAppStore } from '../../store/useAppStore';
 import { colors } from '../../theme/colors';
 import type { EmergencyContact } from '../../types/emergency';
+import { confirmDestructive } from '../../utils/confirmDestructive';
 import { type ContactFormValues, contactFormSchema } from '../../validation/adminForms';
 import { styles } from './adminStyles';
 
@@ -41,10 +42,9 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
     <View>
       <Text style={styles.sectionLabel}>Contatos que aparecem no botão 🆘</Text>
       <Text style={styles.hintText}>
-        Ensine o paciente: 2 toques rápidos no botão vermelho ligam para o primeiro contato com
-        telefone (lista abaixo). A localização fica registrada em &ldquo;Último SOS&rdquo; — com
-        internet, aparece também no celular de outro familiar logado na mesma conta. 1 toque abre a
-        lista para escolher contato ou enviar SMS manualmente.
+        {
+          'Ensine o paciente: 2 toques rápidos no botão vermelho ligam para o primeiro contato com telefone (lista abaixo). A localização fica em "Último SOS". Com internet, aparece também no celular de outro familiar logado na mesma conta. 1 toque abre a lista para escolher contato ou enviar SMS manualmente.'
+        }
       </Text>
       <Text style={styles.hintText}>
         Ative notificações neste celular para ser avisada na hora do SOS.
@@ -53,7 +53,7 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
         <View style={[styles.block, styles.sosAlertBlock]}>
           <Text style={styles.blockTitle}>Último SOS (2 toques)</Text>
           <Text style={styles.sosAlertMeta}>
-            {new Date(lastSosAlert.timestamp).toLocaleString('pt-BR')} — {lastSosAlert.contactName}
+            {new Date(lastSosAlert.timestamp).toLocaleString('pt-BR')} · {lastSosAlert.contactName}
           </Text>
           {lastSosAlert.mapsUrl ? (
             <Text style={styles.sosAlertLink} selectable>
@@ -76,13 +76,19 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
               <Text style={styles.itemEmoji}>{contact.emoji}</Text>
               <View style={styles.contactInfo}>
                 <Text style={styles.itemName}>
-                  {contact.name} <Text style={styles.contactRelation}>— {contact.relation}</Text>
+                  {contact.name} <Text style={styles.contactRelation}>({contact.relation})</Text>
                 </Text>
                 <Text style={styles.contactPhone}>
                   {contact.phone || 'sem telefone cadastrado'}
                 </Text>
               </View>
-              <Pressable onPress={() => onRemoveContact(contact.id)}>
+              <Pressable
+                onPress={() =>
+                  confirmDestructive('Remover contato', `Remover ${contact.name}?`, () =>
+                    onRemoveContact(contact.id),
+                  )
+                }
+              >
                 <Text style={styles.deleteLabel}>✕</Text>
               </Pressable>
             </View>

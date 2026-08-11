@@ -44,12 +44,15 @@ export const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
+    minWidth: 0,
     backgroundColor: colors.card,
     borderWidth: 2,
     borderColor: colors.border,
     borderRadius: 14,
     paddingVertical: 12,
+    paddingHorizontal: 6,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   tabButtonActive: {
     backgroundColor: colors.primary,
@@ -355,14 +358,14 @@ export const styles = StyleSheet.create({
   fontScaleButtonLabelActive: {
     color: '#fff',
   },
-  switchScanningTitle: {
+  blockHintTitle: {
     fontFamily: fonts.headingMedium,
     fontSize: 15,
     color: colors.ink,
     marginTop: 16,
     marginBottom: 4,
   },
-  switchScanningDescription: {
+  blockHintText: {
     fontFamily: fonts.body,
     fontSize: 13,
     color: colors.muted,

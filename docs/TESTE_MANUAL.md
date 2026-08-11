@@ -1,54 +1,54 @@
-# Roteiro de teste manual — Falar
+# Roteiro de teste manual
 
-Cerca de 15 minutos, com os dois aparelhos reais (celular do pai + celular da filha), logados na mesma conta.
+Uns 15 minutos, dois aparelhos reais (celular do pai + celular da filha), mesma conta.
 
-## Preparação (2 min)
+**Último teste:** 05/08/2026, dois aparelhos reais. Comunicar, SOS (1 e 2 toques), push, PIN e Evolução ok. Revalidar som após ajustes (toque no item → fala; app aberto em silêncio).
 
-- [ ] Os dois celulares estão com o app instalado (build EAS `preview` ou Expo Go) e logados com o mesmo número de telefone.
-- [ ] Na Área da família (qualquer um dos dois aparelhos), há pelo menos 1 contato de emergência com telefone cadastrado.
-- [ ] Notificações estão permitidas para o app em pelo menos um dos aparelhos (idealmente o da filha).
+## Preparação
 
-## 1. Comunicar (celular do pai) — 3 min
+- [ ] App instalado (EAS preview ou Expo Go), mesmos login nos dois.
+- [ ] Pelo menos 1 contato de emergência com telefone na Área da família.
+- [ ] Notificações permitidas (idealmente no celular da filha).
 
-- [ ] Abrir uma categoria (ex: "Preciso de") e tocar um item — toca a gravação de voz da família (se existir) ou fala por TTS.
-- [ ] Voltar e abrir outra categoria — confirma que a navegação e o áudio funcionam em mais de uma categoria.
-- [ ] Na Área da família, ligar o "Modo baixo letramento" e voltar pro Comunicar — confirma que os textos somem dos tiles e os botões fixos "Sim"/"Não" aparecem no topo.
+## 1. Comunicar (celular do pai)
 
-## 2. SOS — 1 toque (celular do pai) — 2 min
+- [ ] Abrir categoria "Preciso de", tocar item. Áudio (gravação ou TTS).
+- [ ] Outra categoria, confirmar navegação e áudio.
+- [ ] Ligar modo baixo letramento na família, voltar ao Comunicar. Textos somem dos tiles, Sim/Não no topo.
 
-- [ ] Tocar uma vez no botão vermelho — abre a lista de contatos.
-- [ ] Escolher um contato — o app **pede confirmação** antes de ligar.
-- [ ] Cancelar a confirmação — confirma que a ligação não é iniciada.
+## 2. SOS com 1 toque
 
-## 3. SOS — 2 toques, com internet (celular do pai) — 3 min
+- [ ] Um toque no botão vermelho abre lista.
+- [ ] Escolher contato: pede confirmação antes de ligar.
+- [ ] Cancelar: não liga.
 
-- [ ] Tocar duas vezes rápido no botão vermelho.
-- [ ] Confirma que o discador abre **direto, sem pedir confirmação**, ligando para o primeiro contato com telefone.
-- [ ] Confirma que **nenhum SMS é aberto** em seguida.
-- [ ] No celular da filha: chega uma notificação push ("SOS acionado no Falar") em até alguns segundos.
-- [ ] Na Área da família (qualquer aparelho) → aba Emergência: aparece o bloco "Último SOS" com data/hora, nome do contato e link de localização (se o GPS respondeu a tempo).
+## 3. SOS com 2 toques (com internet)
 
-## 4. SOS — 2 toques, sem internet (celular do pai) — 3 min
+- [ ] Dois toques rápidos: discador direto, sem confirmação, primeiro contato com telefone.
+- [ ] Nenhum SMS abre em seguida.
+- [ ] Celular da filha: push "SOS acionado no Falar" em alguns segundos.
+- [ ] Área da família > Emergência: "Último SOS" com data, contato e mapa (se GPS respondeu).
 
-- [ ] Ativar modo avião (ou desligar Wi-Fi/dados) no celular do pai.
-- [ ] Tocar duas vezes rápido no botão vermelho.
-- [ ] Confirma que a ligação **ainda funciona** (usa a rede do chip, não precisa de internet).
-- [ ] Confirma que o app não trava nem mostra erro pro paciente.
-- [ ] Reativar a internet e reabrir a Área da família → Emergência: o "Último SOS" aparece com o aviso "Ainda não confirmado na nuvem" até sincronizar, depois some o aviso.
-- [ ] (Sem internet no momento do toque, a notificação push para a filha não é enviada — esperado, documentado em `ARCHITECTURE.md`.)
+## 4. SOS com 2 toques (sem internet no pai)
 
-## 5. Gate da Área da família — 2 min
+- [ ] Modo avião ou sem Wi‑Fi/dados no pai.
+- [ ] Dois toques: ligação ainda funciona (chip).
+- [ ] App não trava nem mostra erro pro paciente.
+- [ ] Voltar internet, reabrir Emergência: "Último SOS" sincroniza (aviso "Ainda não confirmado na nuvem" some).
+- [ ] Push pra filha **não** chega sem internet no pai (esperado).
 
-- [ ] Tocar no botão "⚙️ Família" na tela principal — pede PIN ou biometria (o que estiver configurado).
-- [ ] Errar o PIN/biometria — nega o acesso.
-- [ ] Acertar — entra na Área da família.
-- [ ] Trocar o PIN em Segurança e sair/entrar de novo pra confirmar que o novo PIN vale.
+## 5. Área da família (PIN)
 
-## 6. Evolução — 2 min
+- [ ] Botão Família pede PIN ou biometria.
+- [ ] PIN errado nega.
+- [ ] PIN certo entra.
+- [ ] Trocar PIN em Segurança, sair e entrar de novo.
 
-- [ ] Aba Evolução mostra o resumo (total de comunicações, categoria mais usada, gráfico dos últimos 7 dias).
-- [ ] Tocar "Compartilhar resumo" — abre o menu de compartilhamento nativo do celular com o texto do relatório.
+## 6. Evolução
 
-## Resultado esperado
+- [ ] Resumo: total, categoria mais usada, gráfico 7 dias.
+- [ ] Compartilhar resumo abre share nativo.
 
-Todos os itens acima devem passar sem erros visíveis nem travamentos. Falhas encontradas: anotar aparelho, passo e comportamento observado antes de reportar.
+## Resultado
+
+Tudo passou sem travar? Se não, anotar aparelho, passo e o que aconteceu.

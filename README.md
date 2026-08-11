@@ -1,68 +1,114 @@
 # Falar
 
-Aplicativo de comunicação por toque para pacientes pós-AVC com afasia. Permite que o paciente expresse necessidades básicas tocando em categorias e itens ilustrados, com leitura em voz alta, enquanto a família personaliza o conteúdo e acompanha o uso.
+[![CI](https://github.com/Manuelaalvess/falar-app/actions/workflows/ci.yml/badge.svg)](https://github.com/Manuelaalvess/falar-app/actions/workflows/ci.yml)
+
+App mobile de **Comunicação Alternativa (CAA)** para quem teve AVC e ficou com afasia. O paciente toca em categorias e itens com emoji; o app fala em voz alta. Inclui botão de emergência (1 toque lista contatos, 2 toques rápidos ligam e avisam a família por push).
+
+Desenvolvido a partir de um caso real: meu pai perdeu parte da fala depois do AVC, e eu cuido sozinha. O escopo é uma família com dois celulares na mesma conta, não um produto clínico multi-tenant.
+
+**Stack:** Expo · React Native · TypeScript · Firebase · Zustand · Jest
 
 ## Funcionalidades
 
-- Comunicação por toque: categorias e itens com emoji ou foto, lidos em voz alta (pt-BR).
-- Botão de emergência fixo, com ligação direta para contatos da família.
-- Área da família: personalização de categorias/itens, contatos de emergência e acompanhamento de uso.
-- Autenticação por telefone.
-- Registro de eventos de comunicação e resumo de evolução para acompanhamento fonoaudiológico.
+| Área | O que faz |
+| ---- | --------- |
+| **Comunicar** | Categorias e itens por emoji; TTS pt-BR ou gravação da voz da família (local no aparelho) |
+| **SOS** | 1 toque abre contatos com confirmação; 2 toques rápidos ligam e registram alerta com GPS |
+| **Push** | Outros aparelhos logados recebem notificação no duplo toque (sem Cloud Functions) |
+| **Família** | PIN ou biometria; personalizar itens, contatos, acessibilidade e nome do paciente |
+| **Evolução** | Resumo de uso para fonoaudiologia, com compartilhar |
+| **Offline parcial** | Itens e contatos em cache após login; gravações de voz locais |
+| **Acessibilidade** | Grade CAA, emoji + TTS, modo baixo letramento, escala de fonte, alvos ≥48 px |
 
-## Stack
+## Demo
 
-- [Expo](https://expo.dev) + React Native + TypeScript
-- Firebase (Auth, Firestore, Storage)
-- expo-speech (síntese de voz), expo-image-picker / expo-image-manipulator (fotos)
+Validado em **05/08/2026** nos dois celulares da família (mesma conta Firebase): Comunicar, SOS, push, PIN e Evolução.
+
+Screenshots (Comunicar, SOS, Área da família) em [`docs/screenshots/`](docs/screenshots/).
 
 ## Rodando localmente
 
-Pré-requisitos: Node.js 20+, npm, o app Expo Go no celular ou um emulador Android/iOS configurado.
+Requisitos: Node.js 20+, npm, Expo Go ou emulador Android/iOS.
 
 ```bash
+git clone https://github.com/Manuelaalvess/falar-app.git
+cd falar-app
 npm install
-cp .env.example .env   # preencha com as credenciais do seu projeto Firebase
+cp .env.example .env
 npm start
 ```
 
-Outros comandos úteis:
+Comandos úteis:
 
 ```bash
-npm run android   # abre no emulador/dispositivo Android
-npm run ios       # abre no simulador iOS (requer macOS)
-npm run web       # abre no navegador
-npm run lint       # ESLint
-npm run format     # Prettier
-npm run typecheck  # checagem de tipos TypeScript
+npm run android      # emulador ou dispositivo
+npm run lint
+npm run typecheck
+npm run test:ci      # igual ao CI
+npm run validate     # typecheck + lint + testes
 ```
 
-## Variáveis de ambiente
+### Variáveis de ambiente
 
-Definidas em `.env` (veja `.env.example`), todas com prefixo `EXPO_PUBLIC_` para ficarem disponíveis no bundle do app:
+Arquivo `.env` (modelo em `.env.example`), prefixo `EXPO_PUBLIC_`:
 
-| Variável                                   | Descrição                           |
-| ------------------------------------------ | ----------------------------------- |
-| `EXPO_PUBLIC_FIREBASE_API_KEY`             | Chave de API do projeto Firebase    |
-| `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN`         | Domínio de autenticação             |
-| `EXPO_PUBLIC_FIREBASE_PROJECT_ID`          | ID do projeto                       |
-| `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`      | Bucket de Storage (fotos dos itens) |
-| `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Sender ID                           |
-| `EXPO_PUBLIC_FIREBASE_APP_ID`              | ID do app no Firebase               |
+| Variável | Descrição |
+| -------- | --------- |
+| `EXPO_PUBLIC_FIREBASE_API_KEY` | API key do Firebase |
+| `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN` | Domínio Auth |
+| `EXPO_PUBLIC_FIREBASE_PROJECT_ID` | ID do projeto |
+| `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Sender ID |
+| `EXPO_PUBLIC_FIREBASE_APP_ID` | App ID |
 
-No console do Firebase, o provedor **Phone** precisa estar habilitado em Authentication > Sign-in method. Para testar sem consumir SMS reais, cadastre números de teste em Authentication > Sign-in method > Phone numbers for testing.
+No Firebase Console: Authentication → Phone habilitado. Para desenvolvimento, use números de teste em *Phone numbers for testing*.
 
-O login envia o código de verificação usando `signInWithPhoneNumber` com um reCAPTCHA em WebView (`expo-firebase-recaptcha`), funcionando direto no Expo Go, sem precisar gerar build nativa.
+Login usa reCAPTCHA em WebView (`RecaptchaVerifierModal.tsx`); funciona no Expo Go.
 
-## Estrutura de pastas
+### Build para dispositivo (EAS)
+
+```bash
+npx eas-cli login
+npx eas-cli build --profile preview --platform android
+```
+
+Gera APK interno. Detalhes em [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
+## Estrutura do código
 
 ```
 src/
-  screens/     telas do app (Comunicar, Login, Área da família, Evolução...)
-  components/  componentes reutilizáveis de UI
-  services/    integrações externas (Firebase, TTS, storage local)
-  hooks/       hooks React customizados
-  types/       tipos e interfaces compartilhados
-  theme/       tokens de design (cores, tipografia, espaçamento)
-  constants/   dados estáticos (categorias padrão, etc.)
+  screens/              Login, Comunicar, admin (família)
+  components/           SOS, PIN, gravação, reCAPTCHA
+  components/comunicar/ Grids e overlay da tela principal
+  hooks/                Auth, Firestore, push, ações do paciente
+  services/             Firebase, TTS, push, emergência, áudio
+  store/                Zustand (dados + preferências)
+  utils/                Personalização, stats de evolução
+  validation/           Zod (formulários admin)
+  types/                Tipos TypeScript
+  theme/                Cores e tipografia
+  constants/            Categorias e itens padrão
 ```
+
+## Acessibilidade e CAA
+
+O Falar segue princípios de **Comunicação Alternativa e Aumentativa** para afasia pós-AVC: layout em grade semântica, multimodalidade (emoji + voz), botões grandes (WCAG 2.5.5), fonte Atkinson Hyperlegible e modo baixo letramento (só símbolos + Sim/Não fixos).
+
+Decisões de design com referências (ASHA, OpenAAC, estudos com afasia e revisão sobre apps para 60+): [`docs/ACESSIBILIDADE.md`](docs/ACESSIBILIDADE.md).
+
+## Documentação
+
+| Documento | Conteúdo |
+| --------- | -------- |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | Firestore, SOS, push, offline, segurança |
+| [`docs/ACESSIBILIDADE.md`](docs/ACESSIBILIDADE.md) | CAA, idosos, baixo letramento — princípios e referências |
+| [`docs/REQUISITOS.md`](docs/REQUISITOS.md) | Requisitos funcionais e critérios de aceite |
+| [`docs/TESTE_MANUAL.md`](docs/TESTE_MANUAL.md) | Roteiro de validação em 2 aparelhos |
+
+## Qualidade
+
+Push/PR na branch `master` executa typecheck, ESLint e Jest (`.github/workflows/ci.yml`). **18 testes** unitários (utils, auth, SOS).
+
+## Licença
+
+[MIT](LICENSE)

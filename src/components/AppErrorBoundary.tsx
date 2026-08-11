@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { logError } from '../utils/logError';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 
@@ -20,7 +21,8 @@ export class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorB
   }
 
   componentDidCatch(error: unknown, info: { componentStack: string }): void {
-    console.error('Erro nao tratado na interface:', error, info.componentStack);
+    logError('Erro na UI', error);
+    if (__DEV__) console.error(info.componentStack);
   }
 
   handleRetry = (): void => {

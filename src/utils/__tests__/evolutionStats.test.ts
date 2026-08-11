@@ -1,5 +1,6 @@
 import {
   buildTherapistReport,
+  getEvolutionSummary,
   getLast7DaysCounts,
   getRecentEvents,
   getTopCategory,
@@ -28,7 +29,7 @@ describe('getTopCategory', () => {
   });
 
   it('retorna placeholder quando nao ha eventos', () => {
-    expect(getTopCategory([])).toEqual({ label: '—', count: 0 });
+    expect(getTopCategory([])).toEqual({ label: 'Nenhuma', count: 0 });
   });
 });
 
@@ -61,7 +62,7 @@ describe('getRecentEvents', () => {
 describe('buildTherapistReport', () => {
   it('inclui nome do paciente e total de comunicacoes', () => {
     const events: CommunicationEvent[] = [makeEvent()];
-    const report = buildTherapistReport('Seu Pai', events);
+    const report = buildTherapistReport('Seu Pai', getEvolutionSummary(events));
     expect(report).toContain('Seu Pai');
     expect(report).toContain('Total de comunicações registradas: 1');
   });

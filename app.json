@@ -3,6 +3,7 @@
     "name": "Falar",
     "slug": "falar-app",
     "version": "1.0.0",
+    "description": "Comunicação alternativa para afasia pós-AVC, com botão SOS e área da família.",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

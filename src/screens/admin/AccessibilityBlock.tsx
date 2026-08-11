@@ -3,17 +3,15 @@ import { Pressable, Text, View } from 'react-native';
 import { type FontScale } from '../../store/useAppStore';
 import { styles } from './adminStyles';
 
-const FONT_SCALE_OPTIONS: { value: FontScale; label: string }[] = [
-  { value: 1, label: 'Normal' },
-  { value: 1.25, label: 'Grande' },
-  { value: 1.5, label: 'Extra grande' },
+const FONT_SCALE_OPTIONS: { value: FontScale; label: string; hint: string }[] = [
+  { value: 1, label: 'Normal', hint: 'Tamanho padrão' },
+  { value: 1.25, label: 'Grande', hint: 'Recomendado para idosos' },
+  { value: 1.5, label: 'Extra grande', hint: 'Baixa visão ou tremor nas mãos' },
 ];
 
 interface AccessibilityBlockProps {
   fontScale: FontScale;
   onChangeFontScale: (scale: FontScale) => void;
-  switchScanningEnabled: boolean;
-  onChangeSwitchScanning: (enabled: boolean) => void;
   lowLiteracyMode: boolean;
   onChangeLowLiteracyMode: (enabled: boolean) => void;
 }
@@ -21,14 +19,22 @@ interface AccessibilityBlockProps {
 export function AccessibilityBlock({
   fontScale,
   onChangeFontScale,
-  switchScanningEnabled,
-  onChangeSwitchScanning,
   lowLiteracyMode,
   onChangeLowLiteracyMode,
 }: AccessibilityBlockProps) {
   return (
     <View style={styles.block}>
-      <Text style={styles.blockTitle}>Tamanho da letra e dos botões</Text>
+      <Text style={styles.blockTitle}>Acessibilidade</Text>
+      <Text style={styles.blockHintText}>
+        Ajustes baseados em diretrizes de CAA (ASHA), WCAG e revisões sobre apps para idosos.
+        Detalhes em docs/ACESSIBILIDADE.md.
+      </Text>
+
+      <Text style={styles.blockHintTitle}>Tamanho da letra e dos botões</Text>
+      <Text style={styles.blockHintText}>
+        Aumenta emoji, rótulos e áreas de toque na tela Comunicar. Fonte Atkinson Hyperlegible
+        (desenhada para baixa visão).
+      </Text>
       <View style={styles.fontScaleRow}>
         {FONT_SCALE_OPTIONS.map((option) => (
           <Pressable
@@ -38,6 +44,10 @@ export function AccessibilityBlock({
               fontScale === option.value && styles.fontScaleButtonActive,
             ]}
             onPress={() => onChangeFontScale(option.value)}
+            accessibilityRole="button"
+            accessibilityLabel={`Tamanho ${option.label}`}
+            accessibilityHint={option.hint}
+            accessibilityState={{ selected: fontScale === option.value }}
           >
             <Text
               style={[
@@ -51,49 +61,18 @@ export function AccessibilityBlock({
         ))}
       </View>
 
-      <Text style={styles.switchScanningTitle}>Varredura por botão único</Text>
-      <Text style={styles.switchScanningDescription}>
-        O app destaca cada categoria/item em sequência automaticamente. Toque no botão grande
-        &ldquo;Selecionar&rdquo; na hora certa em vez de tocar diretamente no item.
-      </Text>
-      <View style={styles.fontScaleRow}>
-        <Pressable
-          style={[styles.fontScaleButton, !switchScanningEnabled && styles.fontScaleButtonActive]}
-          onPress={() => onChangeSwitchScanning(false)}
-        >
-          <Text
-            style={[
-              styles.fontScaleButtonLabel,
-              !switchScanningEnabled && styles.fontScaleButtonLabelActive,
-            ]}
-          >
-            Desligada
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.fontScaleButton, switchScanningEnabled && styles.fontScaleButtonActive]}
-          onPress={() => onChangeSwitchScanning(true)}
-        >
-          <Text
-            style={[
-              styles.fontScaleButtonLabel,
-              switchScanningEnabled && styles.fontScaleButtonLabelActive,
-            ]}
-          >
-            Ligada
-          </Text>
-        </Pressable>
-      </View>
-
-      <Text style={styles.switchScanningTitle}>Modo baixo letramento</Text>
-      <Text style={styles.switchScanningDescription}>
-        Reduz o texto na tela de Comunicar (o emoji domina) e adiciona botões fixos de
-        &ldquo;Sim&rdquo; e &ldquo;Não&rdquo; sempre visíveis.
+      <Text style={styles.blockHintTitle}>Modo baixo letramento</Text>
+      <Text style={styles.blockHintText}>
+        Esconde textos na Comunicar (só emoji) e mantém Sim/Não sempre visíveis no topo — útil
+        quando ler na tela é difícil ou gera sobrecarga cognitiva.
       </Text>
       <View style={styles.fontScaleRow}>
         <Pressable
           style={[styles.fontScaleButton, !lowLiteracyMode && styles.fontScaleButtonActive]}
           onPress={() => onChangeLowLiteracyMode(false)}
+          accessibilityRole="button"
+          accessibilityLabel="Modo baixo letramento desligado"
+          accessibilityState={{ selected: !lowLiteracyMode }}
         >
           <Text
             style={[
@@ -107,6 +86,9 @@ export function AccessibilityBlock({
         <Pressable
           style={[styles.fontScaleButton, lowLiteracyMode && styles.fontScaleButtonActive]}
           onPress={() => onChangeLowLiteracyMode(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Modo baixo letramento ligado"
+          accessibilityState={{ selected: lowLiteracyMode }}
         >
           <Text
             style={[

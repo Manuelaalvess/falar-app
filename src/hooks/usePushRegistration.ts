@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 
 import { getDeviceId } from '../services/deviceId';
 import { registerPushToken } from '../services/pushTokens';
+import { logError } from '../utils/logError';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -32,7 +33,7 @@ export function usePushRegistration(uid: string | null): void {
         const { data: token } = await Notifications.getExpoPushTokenAsync();
         await registerPushToken(currentUid, deviceId, token);
       } catch (error) {
-        console.error('Falha ao registrar notificacoes push:', error);
+        logError('Registro push', error);
       }
     }
 

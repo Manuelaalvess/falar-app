@@ -1,12 +1,9 @@
+import { useMemo } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
 
 import type { CommunicationEvent } from '../../types/evolution';
-import {
-  buildTherapistReport,
-  getLast7DaysCounts,
-  getRecentEvents,
-  getTopCategory,
-} from '../../utils/evolutionStats';
+import { buildTherapistReport, getEvolutionSummary } from '../../utils/evolutionStats';
+import { logError } from '../../utils/logError';
 import { styles } from './adminStyles';
 
 interface EvolucaoTabProps {
@@ -15,16 +12,13 @@ interface EvolucaoTabProps {
 }
 
 export function EvolucaoTab({ patientName, events }: EvolucaoTabProps) {
-  const total = events.length;
-  const topCategory = getTopCategory(events);
-  const last7Days = getLast7DaysCounts(events);
-  const maxCount = Math.max(1, ...last7Days.map((day) => day.count));
-  const recent = getRecentEvents(events, 8);
-  const report = buildTherapistReport(patientName, events);
+  const summary = useMemo(() => getEvolutionSummary(events), [events]);
+  const report = useMemo(() => buildTherapistReport(patientName, summary), [patientName, summary]);
+  const maxCount = Math.max(1, ...summary.last7Days.map((day) => day.count));
 
   function handleShareReport() {
     Share.share({ message: report }).catch((error: unknown) => {
-      console.error('Falha ao compartilhar resumo:', error);
+      logError('Compartilhar resumo', error);
     });
   }
 
@@ -33,18 +27,18 @@ export function EvolucaoTab({ patientName, events }: EvolucaoTabProps) {
       <Text style={styles.sectionLabel}>Resumo</Text>
       <View style={styles.statRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statNum}>{total}</Text>
+          <Text style={styles.statNum}>{summary.total}</Text>
           <Text style={styles.statLabel}>comunicações no total</Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statNum}>{topCategory.count}</Text>
-          <Text style={styles.statLabel}>{topCategory.label}</Text>
+          <Text style={styles.statNum}>{summary.topCategory.count}</Text>
+          <Text style={styles.statLabel}>{summary.topCategory.label}</Text>
         </View>
       </View>
 
       <Text style={styles.sectionLabel}>Últimos 7 dias</Text>
       <View style={styles.block}>
-        {last7Days.map((day, index) => (
+        {summary.last7Days.map((day, index) => (
           <View key={index} style={styles.barRow}>
             <Text style={styles.barDay}>{day.label}</Text>
             <View style={styles.barTrack}>
@@ -64,8 +58,8 @@ export function EvolucaoTab({ patientName, events }: EvolucaoTabProps) {
           <Text style={styles.addButtonLabel}>Compartilhar resumo</Text>
         </Pressable>
         <View style={styles.recentList}>
-          {recent.length > 0 ? (
-            recent.map((event) => (
+          {summary.recent.length > 0 ? (
+            summary.recent.map((event) => (
               <View key={event.id} style={styles.recentItem}>
                 <Text style={styles.recentItemLabel}>{event.itemName}</Text>
                 <Text style={styles.recentItemDate}>

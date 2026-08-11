@@ -15,6 +15,7 @@ import {
 } from 'firebase/firestore';
 
 import type { EmergencyContact, EmergencySosAlert } from '../types/emergency';
+import { logError } from '../utils/logError';
 import { firestore } from './firebase';
 import { writeCache } from './localCache';
 
@@ -109,7 +110,7 @@ export async function persistEmergencySosAlert(
     });
     alert.id = ref.id;
   } catch (error) {
-    console.error('Falha ao sincronizar SOS no Firestore (sem internet?):', error);
+    logError('Sync SOS Firestore', error);
   }
 
   return alert;
@@ -143,7 +144,7 @@ export function subscribeToLatestSosAlert(
       });
     },
     (error) => {
-      console.error('Falha ao escutar alertas SOS:', error);
+      logError('Alertas SOS', error);
       callback(null);
     },
   );

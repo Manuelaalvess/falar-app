@@ -8,6 +8,7 @@ import { persistEmergencySosAlert } from './emergency';
 import { sendPushNotifications } from './expoPush';
 import { getCurrentLocationMapsUrl } from './location';
 import { getOtherDeviceTokens } from './pushTokens';
+import { logError } from '../utils/logError';
 
 export function getCallableContacts(contacts: EmergencyContact[]): EmergencyContact[] {
   return contacts.filter((contact) => contact.phone.trim().length > 0);
@@ -24,7 +25,7 @@ export interface DoubleTapEmergencyResult {
 
 /**
  * Duplo toque: grava localização para a família e abre só o discador (tel:).
- * Não abre SMS em sequência — isso tirava o paciente do Falar e do telefone.
+ * Não abre SMS em sequência; isso tirava o paciente do Falar e do telefone.
  */
 export async function triggerDoubleTapEmergency(
   uid: string,
@@ -43,7 +44,7 @@ export async function triggerDoubleTapEmergency(
   await Linking.openURL(`tel:${phone}`);
 
   notifyOtherDevices(uid, contact, mapsUrl).catch((error: unknown) => {
-    console.error('Falha ao notificar outros aparelhos do SOS:', error);
+    logError('Push SOS', error);
   });
 
   return { locationOk: mapsUrl !== null };
@@ -62,6 +63,3 @@ async function notifyOtherDevices(
     : `Ligou para ${contact.name}. Sem localização GPS neste acionamento.`;
   await sendPushNotifications(tokens, 'SOS acionado no Falar', body);
 }
-
-// Re-export para o sheet (1 toque → SMS manual)
-export { buildEmergencySmsBody, buildSmsUrl } from './emergencySms';
