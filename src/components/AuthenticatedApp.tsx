@@ -4,10 +4,13 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { AdminScreen } from '../screens/admin/AdminScreen';
 import { ComunicarScreen } from '../screens/ComunicarScreen';
+import { useSosDoublePress } from '../hooks/useSosDoublePress';
 import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { AdminGateModal } from './AdminGateModal';
 import { AppHeader } from './AppHeader';
+import { EmergencySheet } from './EmergencySheet';
+import { SosBar } from './SosBar';
 
 interface AuthenticatedAppProps {
   user: User;
@@ -16,6 +19,8 @@ interface AuthenticatedAppProps {
   onUpdatePatientName: (name: string) => Promise<void>;
   onAddItem: (category: string, name: string, emoji: string) => Promise<void>;
   onRemoveItem: (itemId: string) => Promise<void>;
+  onAddCategory: (label: string, emoji: string) => Promise<void>;
+  onRemoveCategory: (categoryKey: string) => Promise<void>;
   onAddContact: (name: string, relation: string, phone: string, emoji: string) => Promise<void>;
   onRemoveContact: (contactId: string) => Promise<void>;
   onSignOut: () => Promise<void>;
@@ -28,13 +33,18 @@ export function AuthenticatedApp({
   onUpdatePatientName,
   onAddItem,
   onRemoveItem,
+  onAddCategory,
+  onRemoveCategory,
   onAddContact,
   onRemoveContact,
   onSignOut,
 }: AuthenticatedAppProps) {
   const showAdmin = useAppStore((state) => state.showAdmin);
   const setShowAdmin = useAppStore((state) => state.setShowAdmin);
+  const emergencyContacts = useAppStore((state) => state.emergencyContacts);
   const [showAdminGate, setShowAdminGate] = useState(false);
+  const [showSOS, setShowSOS] = useState(false);
+  const { busy: sosBusy, handleDoublePress } = useSosDoublePress(user.uid, emergencyContacts);
 
   if (!comunicarReady) {
     return (
@@ -52,6 +62,8 @@ export function AuthenticatedApp({
         onUpdatePatientName={onUpdatePatientName}
         onAddItem={onAddItem}
         onRemoveItem={onRemoveItem}
+        onAddCategory={onAddCategory}
+        onRemoveCategory={onRemoveCategory}
         onAddContact={onAddContact}
         onRemoveContact={onRemoveContact}
         onClose={() => setShowAdmin(false)}
@@ -62,8 +74,24 @@ export function AuthenticatedApp({
 
   return (
     <>
-      <AppHeader rightLabel="⚙️ Família" onRightPress={() => setShowAdminGate(true)} />
+      <AppHeader
+        rightLabel="⚙️ Família"
+        onRightPress={() => setShowAdminGate(true)}
+        sosButton={
+          <SosBar
+            inline
+            busy={sosBusy}
+            onSinglePress={() => setShowSOS(true)}
+            onDoublePress={() => void handleDoublePress()}
+          />
+        }
+      />
       <ComunicarScreen uid={user.uid} />
+      <EmergencySheet
+        visible={showSOS}
+        contacts={emergencyContacts}
+        onClose={() => setShowSOS(false)}
+      />
       <AdminGateModal
         visible={showAdminGate}
         uid={user.uid}

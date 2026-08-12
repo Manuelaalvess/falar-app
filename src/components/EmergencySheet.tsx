@@ -64,14 +64,18 @@ export function EmergencySheet({ visible, contacts, onClose }: EmergencySheetPro
           {callable.length > 0 ? (
             callable.map((contact) => (
               <View key={contact.id} style={styles.contactRow}>
-                <Text style={styles.contactEmoji}>{contact.emoji}</Text>
-                <View style={styles.contactInfo}>
-                  <Text style={styles.contactName}>{contact.name}</Text>
-                  <Text style={styles.contactRelation}>{contact.relation}</Text>
+                <View style={styles.contactHeader}>
+                  <Text style={styles.contactEmoji}>{contact.emoji}</Text>
+                  <View style={styles.contactInfo}>
+                    <Text style={styles.contactName}>{contact.name}</Text>
+                    <Text style={styles.contactRelation}>{contact.relation}</Text>
+                  </View>
                 </View>
                 <View style={styles.contactActions}>
                   <Pressable style={styles.callButton} onPress={() => handleCall(contact)}>
-                    <Text style={styles.callButtonLabel}>📞 Ligar</Text>
+                    <Text style={styles.actionButtonLabel} numberOfLines={1}>
+                      📞 Ligar
+                    </Text>
                   </Pressable>
                   <Pressable
                     style={styles.locationButton}
@@ -81,7 +85,9 @@ export function EmergencySheet({ visible, contacts, onClose }: EmergencySheetPro
                     {sendingLocationFor === contact.id ? (
                       <ActivityIndicator size="small" color="#fff" />
                     ) : (
-                      <Text style={styles.locationButtonLabel}>📍 Localização</Text>
+                      <Text style={styles.actionButtonLabel} numberOfLines={1}>
+                        📍 Localização
+                      </Text>
                     )}
                   </Pressable>
                 </View>
@@ -123,58 +129,68 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
     backgroundColor: colors.background,
     borderRadius: 16,
     padding: 14,
     marginBottom: 12,
+    gap: 12,
+  },
+  contactHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   contactEmoji: {
     fontSize: 32,
   },
   contactInfo: {
     flex: 1,
+    minWidth: 0,
   },
   contactName: {
     fontFamily: fonts.headingBold,
     fontSize: 17,
     color: colors.ink,
+    flexShrink: 1,
   },
   contactRelation: {
     fontFamily: fonts.body,
     fontSize: fontSizes.bodySmall,
     color: colors.muted,
+    marginTop: 2,
   },
   contactActions: {
-    gap: 8,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    width: '100%',
   },
   callButton: {
-    backgroundColor: colors.success,
+    flex: 1,
+    minHeight: 44,
     borderRadius: 12,
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.success,
+    marginRight: 4,
   },
-  callButtonLabel: {
+  actionButtonLabel: {
     fontFamily: fonts.headingMedium,
     fontSize: 14,
     color: '#fff',
+    textAlign: 'center',
   },
   locationButton: {
-    backgroundColor: colors.primary,
+    flex: 1,
+    minHeight: 44,
     borderRadius: 12,
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 8,
     alignItems: 'center',
-    minHeight: 34,
     justifyContent: 'center',
-  },
-  locationButtonLabel: {
-    fontFamily: fonts.headingMedium,
-    fontSize: 14,
-    color: '#fff',
+    backgroundColor: colors.primary,
+    marginLeft: 4,
   },
   emptyText: {
     fontFamily: fonts.body,

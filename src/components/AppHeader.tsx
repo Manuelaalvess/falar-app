@@ -1,24 +1,42 @@
+import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
+import { headerActionStyles } from './headerActionStyles';
 
 interface AppHeaderProps {
   rightLabel?: string;
   onRightPress?: () => void;
+  sosButton?: ReactNode;
 }
 
-export function AppHeader({ rightLabel, onRightPress }: AppHeaderProps) {
+export function AppHeader({ rightLabel, onRightPress, sosButton }: AppHeaderProps) {
+  const showActions = sosButton || rightLabel;
+
   return (
     <View style={styles.container}>
       <View style={styles.titleRow}>
         <View style={styles.dot} />
         <Text style={styles.title}>Falar</Text>
       </View>
-      {rightLabel ? (
-        <Pressable style={styles.rightButton} onPress={onRightPress}>
-          <Text style={styles.rightLabel}>{rightLabel}</Text>
-        </Pressable>
+      {showActions ? (
+        <View style={styles.actionsRow}>
+          {sosButton}
+          {rightLabel ? (
+            <Pressable
+              style={({ pressed }) => [
+                headerActionStyles.button,
+                pressed && headerActionStyles.buttonPressed,
+              ]}
+              onPress={onRightPress}
+              accessibilityRole="button"
+              accessibilityLabel="Área da família"
+            >
+              <Text style={headerActionStyles.label}>{rightLabel}</Text>
+            </Pressable>
+          ) : null}
+        </View>
       ) : null}
     </View>
   );
@@ -49,17 +67,9 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.title,
     color: colors.primaryDark,
   },
-  rightButton: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  rightLabel: {
-    fontFamily: fonts.headingMedium,
-    fontSize: fontSizes.bodySmall,
-    color: colors.muted,
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
 });

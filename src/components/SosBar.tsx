@@ -1,9 +1,9 @@
 import { useRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
-import { useAppStore } from '../store/useAppStore';
 import { colors } from '../theme/colors';
 import { fonts, scaledSize } from '../theme/typography';
+import { headerActionStyles } from './headerActionStyles';
 
 const DOUBLE_TAP_WINDOW_MS = 450;
 const SINGLE_TAP_DELAY_MS = DOUBLE_TAP_WINDOW_MS + 50;
@@ -12,10 +12,10 @@ interface SosBarProps {
   onSinglePress: () => void;
   onDoublePress: () => void;
   busy?: boolean;
+  inline?: boolean;
 }
 
-export function SosBar({ onSinglePress, onDoublePress, busy = false }: SosBarProps) {
-  const fontScale = useAppStore((state) => state.fontScale);
+export function SosBar({ onSinglePress, onDoublePress, busy = false, inline = false }: SosBarProps) {
   const lastTapAt = useRef(0);
   const singleTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -49,6 +49,31 @@ export function SosBar({ onSinglePress, onDoublePress, busy = false }: SosBarPro
     }, SINGLE_TAP_DELAY_MS);
   }
 
+  if (inline) {
+    return (
+      <Pressable
+        style={({ pressed }) => [
+          headerActionStyles.button,
+          headerActionStyles.sosButton,
+          busy && styles.inlineBusy,
+          pressed && !busy && headerActionStyles.buttonPressed,
+        ]}
+        onPress={handlePress}
+        disabled={busy}
+        accessibilityRole="button"
+        accessibilityLabel="Preciso de ajuda"
+        accessibilityHint="Um toque abre contatos. Dois toques rápidos ligam para emergência."
+        testID="sos-button"
+      >
+        {busy ? (
+          <ActivityIndicator color={colors.danger} size="small" />
+        ) : (
+          <Text style={[headerActionStyles.label, headerActionStyles.sosLabel]}>🆘 SOS</Text>
+        )}
+      </Pressable>
+    );
+  }
+
   return (
     <Pressable
       style={({ pressed }) => [
@@ -61,13 +86,14 @@ export function SosBar({ onSinglePress, onDoublePress, busy = false }: SosBarPro
       accessibilityRole="button"
       accessibilityLabel="Preciso de ajuda"
       accessibilityHint="Um toque abre contatos. Dois toques rápidos ligam para emergência."
+      testID="sos-button"
     >
       {busy ? (
         <ActivityIndicator color="#fff" size="large" />
       ) : (
-        <Text style={[styles.emoji, { fontSize: scaledSize(44, fontScale) }]}>🆘</Text>
+        <Text style={styles.emoji}>🆘</Text>
       )}
-      <Text style={[styles.title, { fontSize: scaledSize(24, fontScale) }]}>Preciso de ajuda</Text>
+      <Text style={styles.title}>Preciso de ajuda</Text>
     </Pressable>
   );
 }
@@ -93,6 +119,9 @@ const styles = StyleSheet.create({
   containerPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.99 }],
+  },
+  inlineBusy: {
+    opacity: 0.92,
   },
   emoji: {
     fontSize: 44,
