@@ -7,6 +7,23 @@ service cloud.firestore {
         return request.auth != null && request.auth.uid == userId;
       }
 
+      match /categories/{categoryId} {
+        allow read, delete: if isOwner();
+        allow create: if isOwner()
+          && request.resource.data.keys().hasOnly(['key', 'label', 'emoji', 'createdAt'])
+          && request.resource.data.key is string
+          && request.resource.data.key.size() > 0
+          && request.resource.data.key.size() <= 40
+          && request.resource.data.label is string
+          && request.resource.data.label.size() > 0
+          && request.resource.data.label.size() <= 40
+          && request.resource.data.emoji is string
+          && request.resource.data.emoji.size() > 0
+          && request.resource.data.emoji.size() <= 8
+          && request.resource.data.createdAt == request.time;
+        allow update: if false;
+      }
+
       match /items/{itemId} {
         allow read, delete: if isOwner();
         allow create: if isOwner()

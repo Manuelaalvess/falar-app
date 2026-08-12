@@ -49,8 +49,9 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.border,
     borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -60,8 +61,9 @@ export const styles = StyleSheet.create({
   },
   tabButtonLabel: {
     fontFamily: fonts.headingMedium,
-    fontSize: fontSizes.bodySmall,
+    fontSize: 13,
     color: colors.muted,
+    textAlign: 'center',
   },
   tabButtonLabelActive: {
     color: '#fff',
@@ -76,7 +78,15 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.6,
     color: colors.muted,
-    marginBottom: 14,
+    marginBottom: 10,
+    marginTop: 4,
+  },
+  sectionIntro: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.body,
+    color: colors.ink,
+    lineHeight: 22,
+    marginBottom: 18,
   },
   hintText: {
     fontFamily: fonts.body,
@@ -307,12 +317,13 @@ export const styles = StyleSheet.create({
   },
   reportText: {
     fontFamily: fonts.body,
-    fontSize: 14,
+    fontSize: 13,
     color: colors.ink,
-    lineHeight: 21,
+    lineHeight: 20,
     backgroundColor: colors.background,
     borderRadius: 12,
     padding: 12,
+    marginBottom: 12,
   },
   recentList: {
     marginTop: 14,
@@ -338,6 +349,45 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  choiceRow: {
+    flexDirection: 'row',
+    gap: 8,
+    width: '100%',
+  },
+  choiceButton: {
+    minWidth: 0,
+    minHeight: 44,
+    borderWidth: 2,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+  },
+  choiceButtonHalf: {
+    flex: 1,
+  },
+  choiceButtonThird: {
+    flex: 1,
+  },
+  choiceButtonActive: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  choiceButtonLabel: {
+    fontFamily: fonts.headingMedium,
+    fontSize: 13,
+    lineHeight: 16,
+    color: colors.ink,
+  },
+  choiceButtonLabelActive: {
+    color: '#fff',
+  },
+  choiceButtonLabelCentered: {
+    textAlign: 'center',
+  },
   fontScaleButton: {
     flex: 1,
     borderWidth: 2,
@@ -358,11 +408,17 @@ export const styles = StyleSheet.create({
   fontScaleButtonLabelActive: {
     color: '#fff',
   },
+  blockHintTitleFirst: {
+    fontFamily: fonts.headingMedium,
+    fontSize: 15,
+    color: colors.ink,
+    marginBottom: 8,
+  },
   blockHintTitle: {
     fontFamily: fonts.headingMedium,
     fontSize: 15,
     color: colors.ink,
-    marginTop: 16,
+    marginTop: 4,
     marginBottom: 4,
   },
   blockHintText: {
@@ -371,5 +427,37 @@ export const styles = StyleSheet.create({
     color: colors.muted,
     lineHeight: 19,
     marginBottom: 10,
+  },
+  blockSpacingTop: {
+    marginTop: 14,
+  },
+  fieldSpacingTop: {
+    marginTop: 10,
+  },
+  categoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  categoryHeaderMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    minWidth: 0,
+  },
+  categoryMeta: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.bodySmall,
+    color: colors.muted,
+  },
+  evolutionSummary: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.body,
+    color: colors.ink,
+    lineHeight: 22,
+    marginBottom: 12,
   },
 });

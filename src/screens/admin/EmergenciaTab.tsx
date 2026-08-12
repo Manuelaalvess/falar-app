@@ -40,18 +40,13 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
 
   return (
     <View>
-      <Text style={styles.sectionLabel}>Contatos que aparecem no botão 🆘</Text>
-      <Text style={styles.hintText}>
-        {
-          'Ensine o paciente: 2 toques rápidos no botão vermelho ligam para o primeiro contato com telefone (lista abaixo). A localização fica em "Último SOS". Com internet, aparece também no celular de outro familiar logado na mesma conta. 1 toque abre a lista para escolher contato ou enviar SMS manualmente.'
-        }
+      <Text style={styles.sectionIntro}>
+        2 toques no 🆘 ligam para o primeiro contato. 1 toque abre a lista para escolher.
       </Text>
-      <Text style={styles.hintText}>
-        Ative notificações neste celular para ser avisada na hora do SOS.
-      </Text>
+
       {lastSosAlert ? (
         <View style={[styles.block, styles.sosAlertBlock]}>
-          <Text style={styles.blockTitle}>Último SOS (2 toques)</Text>
+          <Text style={styles.blockTitle}>Último SOS</Text>
           <Text style={styles.sosAlertMeta}>
             {new Date(lastSosAlert.timestamp).toLocaleString('pt-BR')} · {lastSosAlert.contactName}
           </Text>
@@ -60,26 +55,27 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
               {lastSosAlert.mapsUrl}
             </Text>
           ) : (
-            <Text style={styles.emptyLabel}>Sem localização GPS neste acionamento.</Text>
+            <Text style={styles.emptyLabel}>Sem localização neste acionamento.</Text>
           )}
-          {lastSosAlert.id.startsWith('local-') ? (
-            <Text style={styles.emptyLabel}>
-              Ainda não confirmado na nuvem (sem internet no momento do acionamento).
-            </Text>
-          ) : null}
         </View>
       ) : null}
+
+      <Text style={styles.sectionLabel}>Contatos</Text>
       <View style={styles.block}>
         {contacts.length > 0 ? (
-          contacts.map((contact) => (
+          contacts.map((contact, index) => (
             <View key={contact.id} style={styles.itemRow}>
               <Text style={styles.itemEmoji}>{contact.emoji}</Text>
               <View style={styles.contactInfo}>
                 <Text style={styles.itemName}>
-                  {contact.name} <Text style={styles.contactRelation}>({contact.relation})</Text>
+                  {index === 0 ? '★ ' : ''}
+                  {contact.name}
+                  {contact.relation ? (
+                    <Text style={styles.contactRelation}> · {contact.relation}</Text>
+                  ) : null}
                 </Text>
                 <Text style={styles.contactPhone}>
-                  {contact.phone || 'sem telefone cadastrado'}
+                  {contact.phone || 'Cadastre um telefone'}
                 </Text>
               </View>
               <Pressable
@@ -88,15 +84,19 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
                     onRemoveContact(contact.id),
                   )
                 }
+                accessibilityLabel={`Remover ${contact.name}`}
               >
                 <Text style={styles.deleteLabel}>✕</Text>
               </Pressable>
             </View>
           ))
         ) : (
-          <Text style={styles.emptyLabel}>Nenhum contato ainda.</Text>
+          <Text style={styles.emptyLabel}>Adicione pelo menos um contato com telefone.</Text>
         )}
+      </View>
 
+      <Text style={styles.sectionLabel}>Novo contato</Text>
+      <View style={styles.block}>
         <Controller
           control={control}
           name="emoji"
@@ -115,44 +115,29 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
           )}
         />
 
-        <View style={styles.contactFormRow}>
-          <Controller
-            control={control}
-            name="name"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <TextInput
-                style={styles.input}
-                placeholder="Nome (ex: Ana)"
-                placeholderTextColor={colors.muted}
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-              />
-            )}
-          />
-          <Controller
-            control={control}
-            name="relation"
-            render={({ field: { value, onChange, onBlur } }) => (
-              <TextInput
-                style={styles.input}
-                placeholder="Relação (ex: Filha)"
-                placeholderTextColor={colors.muted}
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-              />
-            )}
-          />
-        </View>
+        <Controller
+          control={control}
+          name="name"
+          render={({ field: { value, onChange, onBlur } }) => (
+            <TextInput
+              style={[styles.input, styles.fieldSpacingTop]}
+              placeholder="Nome"
+              placeholderTextColor={colors.muted}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+            />
+          )}
+        />
         {errors.name ? <Text style={styles.errorText}>{errors.name.message}</Text> : null}
+
         <Controller
           control={control}
           name="phone"
           render={({ field: { value, onChange, onBlur } }) => (
             <TextInput
-              style={[styles.input, styles.contactPhoneInput]}
-              placeholder="Telefone"
+              style={[styles.input, styles.fieldSpacingTop]}
+              placeholder="Telefone com DDD"
               placeholderTextColor={colors.muted}
               value={value}
               onChangeText={onChange}
@@ -162,8 +147,24 @@ export function EmergenciaTab({ contacts, onAddContact, onRemoveContact }: Emerg
           )}
         />
         {errors.phone ? <Text style={styles.errorText}>{errors.phone.message}</Text> : null}
+
+        <Controller
+          control={control}
+          name="relation"
+          render={({ field: { value, onChange, onBlur } }) => (
+            <TextInput
+              style={[styles.input, styles.fieldSpacingTop]}
+              placeholder="Relação (opcional)"
+              placeholderTextColor={colors.muted}
+              value={value}
+              onChangeText={onChange}
+              onBlur={onBlur}
+            />
+          )}
+        />
+
         <Pressable style={styles.addContactButton} onPress={handleSubmit(onSubmit)}>
-          <Text style={styles.addButtonLabel}>Adicionar contato</Text>
+          <Text style={styles.addButtonLabel}>Adicionar</Text>
         </Pressable>
       </View>
     </View>

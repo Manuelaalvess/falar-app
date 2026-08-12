@@ -69,18 +69,68 @@ export function getEvolutionSummary(events: CommunicationEvent[]): EvolutionSumm
   };
 }
 
+function formatReportTimestamp(date: Date): string {
+  return date.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatEventTimestamp(timestamp: number): string {
+  return new Date(timestamp).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatWeeklyBlock(last7Days: DayCount[]): string {
+  return last7Days.map((day) => `• ${day.label}: ${day.count}`).join('\n');
+}
+
+function formatRecentBlock(recent: CommunicationEvent[]): string {
+  if (recent.length === 0) {
+    return 'Nenhuma comunicação registrada ainda.';
+  }
+
+  return recent
+    .map(
+      (event, index) =>
+        `${index + 1}. ${event.itemName} · ${event.categoryLabel} · ${formatEventTimestamp(event.timestamp)}`,
+    )
+    .join('\n');
+}
+
 export function buildTherapistReport(patientName: string, summary: EvolutionSummary): string {
-  const dayCounts = summary.last7Days.map((day) => day.count).join(', ');
-  const recentNames = summary.recent.map((event) => event.itemName).join(', ') || 'nenhum';
-  const firstDay = summary.last7Days[0]?.label ?? '';
-  const lastDay = summary.last7Days[6]?.label ?? '';
+  const overviewLines =
+    summary.total > 0
+      ? [
+          `• Total de comunicações: ${summary.total}`,
+          `• Categoria mais usada: ${summary.topCategory.label} (${summary.topCategory.count}x)`,
+        ]
+      : ['• Ainda sem comunicações registradas no app.'];
 
   return [
-    'Resumo para a consulta de fonoaudiologia',
+    'RESUMO FALAR — FONOAUDIOLOGIA',
+    '─────────────────────────────',
+    '',
     `Paciente: ${patientName}`,
-    `Total de comunicações registradas: ${summary.total}`,
-    `Categoria mais usada: ${summary.topCategory.label} (${summary.topCategory.count}x)`,
-    `Últimos 7 dias: ${dayCounts} comunicações por dia (de ${firstDay} a ${lastDay})`,
-    `Últimas comunicações: ${recentNames}`,
+    `Resumo gerado em: ${formatReportTimestamp(new Date())}`,
+    '',
+    'VISÃO GERAL',
+    ...overviewLines,
+    '',
+    'FREQUÊNCIA — ÚLTIMOS 7 DIAS',
+    formatWeeklyBlock(summary.last7Days),
+    '',
+    'ÚLTIMAS COMUNICAÇÕES',
+    formatRecentBlock(summary.recent),
+    '',
+    '—',
+    'App Falar · Comunicação Alternativa e Aumentativa (CAA)',
   ].join('\n');
 }

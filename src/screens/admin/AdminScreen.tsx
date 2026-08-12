@@ -2,12 +2,18 @@ import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useAppStore } from '../../store/useAppStore';
+import { AjustesTab } from './AjustesTab';
 import { styles } from './adminStyles';
 import { EmergenciaTab } from './EmergenciaTab';
-import { EvolucaoTab } from './EvolucaoTab';
-import { PerfilTab } from './PerfilTab';
+import { PalavrasTab } from './PalavrasTab';
 
-type AdminTab = 'perfil' | 'emergencia' | 'evolucao';
+type AdminTab = 'contatos' | 'palavras' | 'ajustes';
+
+const TABS: { key: AdminTab; emoji: string; label: string }[] = [
+  { key: 'contatos', emoji: '🆘', label: 'Contatos' },
+  { key: 'palavras', emoji: '💬', label: 'Palavras' },
+  { key: 'ajustes', emoji: '⚙️', label: 'Ajustes' },
+];
 
 interface AdminScreenProps {
   uid: string;
@@ -15,6 +21,8 @@ interface AdminScreenProps {
   onUpdatePatientName: (name: string) => void;
   onAddItem: (category: string, name: string, emoji: string) => void;
   onRemoveItem: (itemId: string) => void;
+  onAddCategory: (label: string, emoji: string) => void;
+  onRemoveCategory: (categoryKey: string) => void;
   onAddContact: (name: string, relation: string, phone: string, emoji: string) => void;
   onRemoveContact: (contactId: string) => void;
   onClose: () => void;
@@ -27,6 +35,8 @@ export function AdminScreen({
   onUpdatePatientName,
   onAddItem,
   onRemoveItem,
+  onAddCategory,
+  onRemoveCategory,
   onAddContact,
   onRemoveContact,
   onClose,
@@ -39,83 +49,64 @@ export function AdminScreen({
   const setFontScale = useAppStore((state) => state.setFontScale);
   const lowLiteracyMode = useAppStore((state) => state.lowLiteracyMode);
   const setLowLiteracyMode = useAppStore((state) => state.setLowLiteracyMode);
-  const [tab, setTab] = useState<AdminTab>('perfil');
+  const [tab, setTab] = useState<AdminTab>('contatos');
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={onClose}>
+        <Pressable style={styles.backButton} onPress={onClose} accessibilityLabel="Voltar">
           <Text style={styles.backButtonLabel}>←</Text>
         </Pressable>
         <Text style={styles.headerTitle}>Área da família</Text>
       </View>
       <View style={styles.tabs}>
-        <Pressable
-          style={[styles.tabButton, tab === 'perfil' && styles.tabButtonActive]}
-          onPress={() => setTab('perfil')}
-        >
-          <Text
-            style={[styles.tabButtonLabel, tab === 'perfil' && styles.tabButtonLabelActive]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
+        {TABS.map(({ key, emoji, label }) => (
+          <Pressable
+            key={key}
+            style={[styles.tabButton, tab === key && styles.tabButtonActive]}
+            onPress={() => setTab(key)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: tab === key }}
           >
-            Perfil
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tabButton, tab === 'emergencia' && styles.tabButtonActive]}
-          onPress={() => setTab('emergencia')}
-        >
-          <Text
-            style={[styles.tabButtonLabel, tab === 'emergencia' && styles.tabButtonLabelActive]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
-          >
-            Emergência
-          </Text>
-        </Pressable>
-        <Pressable
-          style={[styles.tabButton, tab === 'evolucao' && styles.tabButtonActive]}
-          onPress={() => setTab('evolucao')}
-        >
-          <Text
-            style={[styles.tabButtonLabel, tab === 'evolucao' && styles.tabButtonLabelActive]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.8}
-          >
-            Evolução
-          </Text>
-        </Pressable>
+            <Text
+              style={[styles.tabButtonLabel, tab === key && styles.tabButtonLabelActive]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
+            >
+              {emoji} {label}
+            </Text>
+          </Pressable>
+        ))}
       </View>
       <ScrollView contentContainerStyle={styles.body}>
-        {tab === 'perfil' ? (
-          <PerfilTab
-            uid={uid}
-            patientName={patientName}
-            onUpdatePatientName={onUpdatePatientName}
-            itemsByCategory={itemsByCategory}
-            onAddItem={onAddItem}
-            onRemoveItem={onRemoveItem}
-            fontScale={fontScale}
-            onChangeFontScale={setFontScale}
-            lowLiteracyMode={lowLiteracyMode}
-            onChangeLowLiteracyMode={setLowLiteracyMode}
-          />
-        ) : tab === 'emergencia' ? (
+        {tab === 'contatos' ? (
           <EmergenciaTab
             contacts={emergencyContacts}
             onAddContact={onAddContact}
             onRemoveContact={onRemoveContact}
           />
+        ) : tab === 'palavras' ? (
+          <PalavrasTab
+            itemsByCategory={itemsByCategory}
+            onAddCategory={onAddCategory}
+            onRemoveCategory={onRemoveCategory}
+            onAddItem={onAddItem}
+            onRemoveItem={onRemoveItem}
+          />
         ) : (
-          <EvolucaoTab patientName={patientName} events={events} />
+          <AjustesTab
+            uid={uid}
+            patientName={patientName}
+            onUpdatePatientName={onUpdatePatientName}
+            events={events}
+            fontScale={fontScale}
+            onChangeFontScale={setFontScale}
+            lowLiteracyMode={lowLiteracyMode}
+            onChangeLowLiteracyMode={setLowLiteracyMode}
+            onSignOut={onSignOut}
+          />
         )}
-        <Pressable style={styles.signOutButton} onPress={onSignOut}>
-          <Text style={styles.signOutLabel}>Sair da conta</Text>
-        </Pressable>
       </ScrollView>
     </View>
   );

@@ -60,10 +60,16 @@ describe('getRecentEvents', () => {
 });
 
 describe('buildTherapistReport', () => {
-  it('inclui nome do paciente e total de comunicacoes', () => {
+  it('organiza resumo com secoes para a fono', () => {
     const events: CommunicationEvent[] = [makeEvent()];
     const report = buildTherapistReport('Seu Pai', getEvolutionSummary(events));
-    expect(report).toContain('Seu Pai');
-    expect(report).toContain('Total de comunicações registradas: 1');
+
+    expect(report).toContain('RESUMO FALAR — FONOAUDIOLOGIA');
+    expect(report).toContain('Paciente: Seu Pai');
+    expect(report).toContain('Total de comunicações: 1');
+    expect(report).toContain('VISÃO GERAL');
+    expect(report).toContain('FREQUÊNCIA — ÚLTIMOS 7 DIAS');
+    expect(report).toContain('ÚLTIMAS COMUNICAÇÕES');
+    expect(report).toContain('Água · Preciso de ·');
   });
 });

@@ -70,7 +70,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:ci": "jest --ci",
-    "validate": "npm run typecheck && npm run lint && npm test -- --ci"
+    "validate": "npm run typecheck && npm run lint && npm test -- --ci",
+    "deploy:firestore-rules": "npx firebase-tools deploy --only firestore:rules"
   },
   "jest": {
     "preset": "jest-expo",
