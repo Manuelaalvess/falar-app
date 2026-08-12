@@ -12,19 +12,27 @@ Desenvolvido a partir de um caso real: meu pai perdeu parte da fala depois do AV
 
 | Área | O que faz |
 | ---- | --------- |
-| **Comunicar** | Categorias e itens por emoji; TTS pt-BR ou gravação da voz da família (local no aparelho) |
-| **SOS** | 1 toque abre contatos com confirmação; 2 toques rápidos ligam e registram alerta com GPS |
+| **Comunicar** | Sim/Não fixos no topo; categorias padrão + personalizadas; emoji + TTS pt-BR |
+| **SOS** | No header: 1 toque abre contatos; 2 toques rápidos ligam e registram alerta com GPS |
 | **Push** | Outros aparelhos logados recebem notificação no duplo toque (sem Cloud Functions) |
-| **Família** | PIN ou biometria; personalizar itens, contatos, acessibilidade e nome do paciente |
-| **Evolução** | Resumo de uso para fonoaudiologia, com compartilhar |
-| **Offline parcial** | Itens e contatos em cache após login; gravações de voz locais |
+| **Família** | 3 abas: Contatos, Palavras (itens e categorias), Ajustes (nome, fonte, PIN, evolução) |
+| **Evolução** | Resumo de uso para fonoaudiologia, com compartilhar (aba Ajustes) |
+| **Offline parcial** | Itens e contatos em cache após login |
 | **Acessibilidade** | Grade CAA, emoji + TTS, modo baixo letramento, escala de fonte, alvos ≥48 px |
 
 ## Demo
 
-Validado em **05/08/2026** nos dois celulares da família (mesma conta Firebase): Comunicar, SOS, push, PIN e Evolução.
+Validado em **05/08/2026** nos dois celulares da família (mesma conta Firebase): Comunicar, SOS, push, PIN e resumo para fono.
 
-Screenshots (Comunicar, SOS, Área da família) em [`docs/screenshots/`](docs/screenshots/).
+| Comunicar (home) | Comunicar (categoria) |
+| --- | --- |
+| ![Comunicar, tela inicial](docs/screenshots/comunicar-home.png) | ![Comunicar, categoria](docs/screenshots/comunicar-categoria.png) |
+
+| Família, Palavras | Família, Ajustes |
+| --- | --- |
+| ![Família, aba Palavras](docs/screenshots/familia-palavras.png) | ![Família, aba Ajustes](docs/screenshots/familia-ajustes.png) |
+
+Mais capturas em [`docs/screenshots/`](docs/screenshots/).
 
 ## Rodando localmente
 
@@ -78,10 +86,10 @@ Gera APK interno. Detalhes em [`ARCHITECTURE.md`](ARCHITECTURE.md).
 ```
 src/
   screens/              Login, Comunicar, admin (família)
-  components/           SOS, PIN, gravação, reCAPTCHA
+  components/           SOS, PIN, reCAPTCHA
   components/comunicar/ Grids e overlay da tela principal
   hooks/                Auth, Firestore, push, ações do paciente
-  services/             Firebase, TTS, push, emergência, áudio
+  services/             Firebase, TTS, push, emergência, categorias
   store/                Zustand (dados + preferências)
   utils/                Personalização, stats de evolução
   validation/           Zod (formulários admin)
@@ -101,7 +109,7 @@ Decisões de design com referências (ASHA, OpenAAC, estudos com afasia e revis�
 | Documento | Conteúdo |
 | --------- | -------- |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Firestore, SOS, push, offline, segurança |
-| [`docs/ACESSIBILIDADE.md`](docs/ACESSIBILIDADE.md) | CAA, idosos, baixo letramento — princípios e referências |
+| [`docs/ACESSIBILIDADE.md`](docs/ACESSIBILIDADE.md) | CAA, idosos, baixo letramento: princípios e referências |
 | [`docs/REQUISITOS.md`](docs/REQUISITOS.md) | Requisitos funcionais e critérios de aceite |
 | [`docs/TESTE_MANUAL.md`](docs/TESTE_MANUAL.md) | Roteiro de validação em 2 aparelhos |
 

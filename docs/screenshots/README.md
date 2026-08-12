@@ -1,11 +1,14 @@
 # Screenshots
 
-Arquivos esperados (referenciados no README principal):
+Capturas usadas no README principal (sem dados sensíveis):
 
 | Arquivo | Tela |
 | ------- | ---- |
-| `comunicar.png` | Comunicar — categorias e itens |
-| `sos.png` | Botão SOS / sheet de contatos |
-| `familia.png` | Área da família (admin) |
+| `comunicar-home.png` | Comunicar — Sim/Não fixos e categorias |
+| `comunicar-categoria.png` | Comunicar — itens de uma categoria |
+| `familia-palavras.png` | Área da família — aba Palavras |
+| `familia-ajustes.png` | Área da família — aba Ajustes |
 
-Formato: PNG, retrato, sem dados sensíveis (telefone, nome real).
+Opcional para o portfolio: `sos.png` (sheet de contatos após 1 toque no SOS).
+
+Formato: PNG, retrato.
