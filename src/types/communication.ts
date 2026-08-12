@@ -8,4 +8,5 @@ export interface CommunicationCategory {
   key: string;
   label: string;
   emoji: string;
+  custom?: boolean;
 }

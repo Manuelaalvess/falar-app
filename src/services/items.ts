@@ -10,7 +10,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 
-import { DEFAULT_ITEMS } from '../constants/communication';
+import { DEFAULT_ITEMS, isCoreResponseItem } from '../constants/communication';
 import type { CommunicationItem } from '../types/communication';
 import { deleteRecording } from './audioRecordings';
 import { firestore } from './firebase';
@@ -36,6 +36,7 @@ export function subscribeToItems(
         name: data.name,
         emoji: data.emoji,
       };
+      if (isCoreResponseItem(item)) return;
       grouped[data.category] = [...(grouped[data.category] ?? []), item];
     });
     callback(grouped);
@@ -59,6 +60,28 @@ export async function addItem(
 export async function removeItem(uid: string, itemId: string): Promise<void> {
   await deleteDoc(doc(itemsCollection(uid), itemId));
   deleteRecording(itemId);
+}
+
+export async function removeLegacyCoreResponseItems(uid: string): Promise<void> {
+  const snapshot = await getDocs(itemsCollection(uid));
+  const deletions = snapshot.docs.filter((docSnap) => {
+    const data = docSnap.data() as { name: string };
+    return isCoreResponseItem({ name: data.name });
+  });
+
+  if (deletions.length === 0) return;
+
+  const batch = writeBatch(firestore);
+  deletions.forEach((docSnap) => {
+    batch.delete(docSnap.ref);
+    deleteRecording(docSnap.id);
+  });
+  await batch.commit();
+}
+
+export async function syncDefaultItems(uid: string): Promise<void> {
+  await seedDefaultItemsIfEmpty(uid);
+  await removeLegacyCoreResponseItems(uid);
 }
 
 export async function seedDefaultItemsIfEmpty(uid: string): Promise<void> {

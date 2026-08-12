@@ -7,10 +7,8 @@ import { ItemConfirmOverlay } from '../components/comunicar/ItemConfirmOverlay';
 import { ItemGrid } from '../components/comunicar/ItemGrid';
 import { SimNaoBar } from '../components/comunicar/SimNaoBar';
 import { comunicarStyles as styles } from '../components/comunicar/comunicarStyles';
-import { EmergencySheet } from '../components/EmergencySheet';
-import { SosBar } from '../components/SosBar';
-import { CATEGORIES } from '../constants/communication';
-import { useSosDoublePress } from '../hooks/useSosDoublePress';
+import { CORE_NAO_ITEM, CORE_SIM_ITEM, withoutCoreResponseItems } from '../constants/communication';
+import { useCommunicationCategories, usePrecisoCategory } from '../hooks/useCommunicationCategories';
 import { useSpeakItem } from '../hooks/useSpeakItem';
 import { useAppStore } from '../store/useAppStore';
 import { sortItemsByUsage } from '../utils/personalization';
@@ -20,10 +18,9 @@ interface ComunicarScreenProps {
 }
 
 export function ComunicarScreen({ uid }: ComunicarScreenProps) {
-  const { itemsByCategory, emergencyContacts, events, fontScale, lowLiteracyMode } = useAppStore(
+  const { itemsByCategory, events, fontScale, lowLiteracyMode } = useAppStore(
     useShallow((state) => ({
       itemsByCategory: state.itemsByCategory,
-      emergencyContacts: state.emergencyContacts,
       events: state.events,
       fontScale: state.fontScale,
       lowLiteracyMode: state.lowLiteracyMode,
@@ -31,50 +28,47 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
   );
 
   const [openCategoryKey, setOpenCategoryKey] = useState<string | null>(null);
-  const [showSOS, setShowSOS] = useState(false);
+  const categories = useCommunicationCategories();
+  const precisoCategory = usePrecisoCategory();
 
   const { confirmedItem, chooseItem } = useSpeakItem(uid);
-  const { busy: sosBusy, handleDoublePress } = useSosDoublePress(uid, emergencyContacts);
 
-  const openCategory = CATEGORIES.find((category) => category.key === openCategoryKey);
-  const precisoCategory = CATEGORIES.find((category) => category.key === 'preciso');
-  const precisoItems = itemsByCategory.preciso ?? [];
-  const simItem = precisoItems.find((item) => item.name === 'Sim');
-  const naoItem = precisoItems.find((item) => item.name === 'Não');
+  const openCategory = categories.find((category) => category.key === openCategoryKey);
 
   const items = useMemo(() => {
     if (!openCategoryKey) return [];
-    const raw = itemsByCategory[openCategoryKey] ?? [];
+    const raw = withoutCoreResponseItems(itemsByCategory[openCategoryKey] ?? []);
     return sortItemsByUsage(raw, events, openCategoryKey);
   }, [itemsByCategory, openCategoryKey, events]);
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <SosBar
-          busy={sosBusy}
-          onSinglePress={() => setShowSOS(true)}
-          onDoublePress={() => void handleDoublePress()}
-        />
-
-        {lowLiteracyMode && simItem && naoItem ? (
+      {!openCategory ? (
+        <View style={styles.homeContent}>
           <SimNaoBar
-            simItem={simItem}
-            naoItem={naoItem}
+            simItem={CORE_SIM_ITEM}
+            naoItem={CORE_NAO_ITEM}
             category={precisoCategory}
             fontScale={fontScale}
             onChoose={chooseItem}
           />
-        ) : null}
-
-        {!openCategory ? (
           <CategoryGrid
-            categories={CATEGORIES}
+            categories={categories}
             fontScale={fontScale}
             lowLiteracyMode={lowLiteracyMode}
             onOpenCategory={setOpenCategoryKey}
+            compact
           />
-        ) : (
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <SimNaoBar
+            simItem={CORE_SIM_ITEM}
+            naoItem={CORE_NAO_ITEM}
+            category={precisoCategory}
+            fontScale={fontScale}
+            onChoose={chooseItem}
+          />
           <ItemGrid
             category={openCategory}
             items={items}
@@ -83,16 +77,10 @@ export function ComunicarScreen({ uid }: ComunicarScreenProps) {
             onBack={() => setOpenCategoryKey(null)}
             onChooseItem={(item) => chooseItem(item, openCategory)}
           />
-        )}
-      </ScrollView>
+        </ScrollView>
+      )}
 
       {confirmedItem ? <ItemConfirmOverlay item={confirmedItem} fontScale={fontScale} /> : null}
-
-      <EmergencySheet
-        visible={showSOS}
-        contacts={emergencyContacts}
-        onClose={() => setShowSOS(false)}
-      />
     </View>
   );
 }

@@ -13,6 +13,7 @@ import {
 import { useAccessibilityPrefsCache } from './src/hooks/useAccessibilityPrefsCache';
 import { useAppFonts } from './src/hooks/useAppFonts';
 import { useAuth } from './src/hooks/useAuth';
+import { useCategories } from './src/hooks/useCategories';
 import { useEmergencyContacts } from './src/hooks/useEmergencyContacts';
 import { useEvolutionEvents } from './src/hooks/useEvolutionEvents';
 import { useItems } from './src/hooks/useItems';
@@ -25,6 +26,7 @@ import { signOut, updatePatientName } from './src/services/auth';
 import { getDeviceId } from './src/services/deviceId';
 import { firebaseConfig } from './src/services/firebase';
 import { removePushToken } from './src/services/pushTokens';
+import { initSpeechVoice } from './src/services/speech';
 import { colors } from './src/theme/colors';
 import { logError } from './src/utils/logError';
 
@@ -36,9 +38,10 @@ export default function App() {
   const [fontsLoaded] = useAppFonts();
   const { user, initializing } = useAuth();
   const { loading: itemsLoading } = useItems(user?.uid ?? null);
+  const { loading: categoriesLoading } = useCategories(user?.uid ?? null);
   const { loading: contactsLoading } = useEmergencyContacts(user?.uid ?? null);
   useEvolutionEvents(user?.uid ?? null);
-  const comunicarReady = !itemsLoading && !contactsLoading;
+  const comunicarReady = !itemsLoading && !categoriesLoading && !contactsLoading;
 
   useEffect(() => {
     if (!fontsLoaded || initializing) return;
@@ -50,7 +53,11 @@ export default function App() {
   usePushRegistration(user?.uid ?? null);
   useAccessibilityPrefsCache();
 
-  const { handleAddItem, handleRemoveItem, handleAddContact, handleRemoveContact } =
+  useEffect(() => {
+    initSpeechVoice();
+  }, []);
+
+  const { handleAddItem, handleRemoveItem, handleAddCategory, handleRemoveCategory, handleAddContact, handleRemoveContact } =
     usePatientActions(user?.uid ?? null);
 
   const recaptchaVerifier = useRef<RecaptchaVerifierHandle>(null);
@@ -107,6 +114,8 @@ export default function App() {
               onUpdatePatientName={handleUpdatePatientName}
               onAddItem={handleAddItem}
               onRemoveItem={handleRemoveItem}
+              onAddCategory={handleAddCategory}
+              onRemoveCategory={handleRemoveCategory}
               onAddContact={handleAddContact}
               onRemoveContact={handleRemoveContact}
               onSignOut={handleSignOut}

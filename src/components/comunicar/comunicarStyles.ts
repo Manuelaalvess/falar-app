@@ -1,9 +1,11 @@
 import { StyleSheet } from 'react-native';
 
 import {
+  CATEGORY_TILE_COMPACT_MIN_HEIGHT,
   CATEGORY_TILE_MIN_HEIGHT,
   ITEM_TILE_MIN_HEIGHT,
   MIN_TOUCH_TARGET,
+  SIM_NAO_EMOJI_SIZE,
   SIM_NAO_MIN_HEIGHT,
   TILE_GAP,
 } from '../../constants/accessibility';
@@ -18,6 +20,11 @@ export const comunicarStyles = StyleSheet.create({
     padding: 18,
     flexGrow: 1,
   },
+  homeContent: {
+    flex: 1,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+  },
   sectionLabel: {
     fontFamily: fonts.headingBold,
     fontSize: fontSizes.label,
@@ -26,18 +33,20 @@ export const comunicarStyles = StyleSheet.create({
     color: colors.muted,
     marginBottom: 12,
   },
+  sectionLabelCompact: {
+    marginBottom: 8,
+  },
   simNaoRow: {
     flexDirection: 'row',
     gap: TILE_GAP,
-    marginBottom: 18,
+    marginBottom: 10,
   },
   simNaoButton: {
     flex: 1,
     minHeight: SIM_NAO_MIN_HEIGHT,
-    borderRadius: 20,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
     borderWidth: 2,
   },
   simButton: {
@@ -49,7 +58,7 @@ export const comunicarStyles = StyleSheet.create({
     borderColor: colors.danger,
   },
   simNaoEmoji: {
-    fontSize: 40,
+    fontSize: SIM_NAO_EMOJI_SIZE,
   },
   simNaoLabel: {
     fontFamily: fonts.headingBold,
@@ -68,6 +77,18 @@ export const comunicarStyles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: TILE_GAP,
   },
+  gridFill: {
+    flex: 1,
+    gap: TILE_GAP,
+  },
+  gridRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: TILE_GAP,
+  },
+  gridRowSpacer: {
+    flex: 1,
+  },
   categoryTile: {
     width: '47%',
     minHeight: CATEGORY_TILE_MIN_HEIGHT,
@@ -76,6 +97,16 @@ export const comunicarStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+  },
+  categoryTileCompact: {
+    flex: 1,
+    minHeight: CATEGORY_TILE_COMPACT_MIN_HEIGHT,
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
   },
   itemTile: {
     width: '47%',

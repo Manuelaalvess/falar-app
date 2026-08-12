@@ -1,9 +1,13 @@
 import { Pressable, Text, View } from 'react-native';
 
+import { SIM_NAO_EMOJI_SIZE } from '../../constants/accessibility';
 import type { CommunicationCategory, CommunicationItem } from '../../types/communication';
 import type { FontScale } from '../../store/useAppStore';
 import { scaledSize } from '../../theme/typography';
 import { comunicarStyles as styles } from './comunicarStyles';
+
+const SIM_HAND_EMOJI = '👍';
+const NAO_HAND_EMOJI = '👎';
 
 interface SimNaoBarProps {
   simItem: CommunicationItem;
@@ -26,11 +30,11 @@ export function SimNaoBar({ simItem, naoItem, category, fontScale, onChoose }: S
         accessibilityRole="button"
         accessibilityLabel="Sim"
         accessibilityHint="Toque para falar sim em voz alta"
+        testID="sim-button"
       >
-        <Text style={[styles.simNaoEmoji, { fontSize: scaledSize(40, fontScale) }]}>
-          {simItem.emoji}
+        <Text style={[styles.simNaoEmoji, { fontSize: scaledSize(SIM_NAO_EMOJI_SIZE, fontScale) }]}>
+          {SIM_HAND_EMOJI}
         </Text>
-        <Text style={[styles.simNaoLabel, { fontSize: scaledSize(18, fontScale) }]}>Sim</Text>
       </Pressable>
       <Pressable
         style={({ pressed }) => [
@@ -42,11 +46,11 @@ export function SimNaoBar({ simItem, naoItem, category, fontScale, onChoose }: S
         accessibilityRole="button"
         accessibilityLabel="Não"
         accessibilityHint="Toque para falar não em voz alta"
+        testID="nao-button"
       >
-        <Text style={[styles.simNaoEmoji, { fontSize: scaledSize(40, fontScale) }]}>
-          {naoItem.emoji}
+        <Text style={[styles.simNaoEmoji, { fontSize: scaledSize(SIM_NAO_EMOJI_SIZE, fontScale) }]}>
+          {NAO_HAND_EMOJI}
         </Text>
-        <Text style={[styles.simNaoLabel, { fontSize: scaledSize(18, fontScale) }]}>Não</Text>
       </Pressable>
     </View>
   );

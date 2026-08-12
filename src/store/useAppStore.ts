@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import { writeCache } from '../services/localCache';
-import type { CommunicationItem } from '../types/communication';
+import type { CommunicationCategory, CommunicationItem } from '../types/communication';
 import type { EmergencyContact, EmergencySosAlert } from '../types/emergency';
 import type { CommunicationEvent } from '../types/evolution';
 
@@ -12,6 +12,7 @@ export const LOW_LITERACY_MODE_CACHE_KEY = 'falar:lowLiteracyMode';
 
 interface AppState {
   itemsByCategory: Record<string, CommunicationItem[]>;
+  customCategories: CommunicationCategory[];
   emergencyContacts: EmergencyContact[];
   lastSosAlert: EmergencySosAlert | null;
   events: CommunicationEvent[];
@@ -19,6 +20,7 @@ interface AppState {
   fontScale: FontScale;
   lowLiteracyMode: boolean;
   setItemsByCategory: (itemsByCategory: Record<string, CommunicationItem[]>) => void;
+  setCustomCategories: (customCategories: CommunicationCategory[]) => void;
   setEmergencyContacts: (emergencyContacts: EmergencyContact[]) => void;
   setLastSosAlert: (lastSosAlert: EmergencySosAlert | null) => void;
   setEvents: (events: CommunicationEvent[]) => void;
@@ -29,6 +31,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   itemsByCategory: {},
+  customCategories: [],
   emergencyContacts: [],
   lastSosAlert: null,
   events: [],
@@ -36,6 +39,7 @@ export const useAppStore = create<AppState>((set) => ({
   fontScale: 1,
   lowLiteracyMode: false,
   setItemsByCategory: (itemsByCategory) => set({ itemsByCategory }),
+  setCustomCategories: (customCategories) => set({ customCategories }),
   setEmergencyContacts: (emergencyContacts) => set({ emergencyContacts }),
   setLastSosAlert: (lastSosAlert) => set({ lastSosAlert }),
   setEvents: (events) => set({ events }),

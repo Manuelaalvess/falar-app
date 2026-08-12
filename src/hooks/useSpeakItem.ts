@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { SPEAK_CONFIRM_MS } from '../constants/accessibility';
-import { getRecordingUri } from '../services/audioRecordings';
 import { logEvent } from '../services/evolution';
-import { playSound } from '../services/recording';
 import { speak } from '../services/speech';
 import type { CommunicationCategory, CommunicationItem } from '../types/communication';
 import { tapHaptic } from '../utils/haptics';
@@ -21,16 +19,7 @@ export function useSpeakItem(uid: string) {
   const chooseItem = useCallback(
     (item: CommunicationItem, category?: CommunicationCategory) => {
       tapHaptic();
-      const recordingUri = getRecordingUri(item.id);
-      if (recordingUri) {
-        playSound(recordingUri).catch((error: unknown) => {
-          logError('Áudio do item', error);
-          speak(item.name);
-        });
-      } else {
-        speak(item.name);
-      }
-
+      speak(item.name);
       setConfirmedItem(item);
 
       if (category) {

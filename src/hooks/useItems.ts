@@ -1,4 +1,4 @@
-import { seedDefaultItemsIfEmpty, subscribeToItems } from '../services/items';
+import { subscribeToItems, syncDefaultItems } from '../services/items';
 import { useAppStore } from '../store/useAppStore';
 import { useCachedFirestoreSubscription } from './useCachedFirestoreSubscription';
 
@@ -19,7 +19,7 @@ export function useItems(uid: string | null): ItemsState {
     subscribe: subscribeToItems,
     onUpdate: setItemsByCategory,
     onClear: () => setItemsByCategory({}),
-    seed: seedDefaultItemsIfEmpty,
+    seed: syncDefaultItems,
     seedLogContext: 'Itens padrão',
   });
 }
